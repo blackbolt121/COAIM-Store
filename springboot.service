@@ -1,0 +1,19 @@
+[Unit]
+Description=Spring Boot API Service
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/app
+Environment="SPRING_DATASOURCE_URL=jdbc:mysql://database.smartshop.internal:3306/test"
+Environment="SPRING_DATASOURCE_USERNAME=admin"
+Environment="SPRING_DATASOURCE_PASSWORD=yourpassword123"
+ExecStart=/home/ubuntu/app/start.sh
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

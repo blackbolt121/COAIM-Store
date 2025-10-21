@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Detalles del Usuario</title>
+  <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dv0hzntey/image/upload/v1754238574/urrea_g4nc5s.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+<!-- Sidebar -->
+<div class="w-64 bg-white border-r border-gray-200 shadow-lg">
+  <div class="p-4 text-xl font-bold border-b">
+    <a th:href="@{/admin/dashboard}">
+      <img src="/images/logo.png" alt="SmartShop" class="w-40" />
+    </a>
+  </div>
+  <nav class="p-4 space-y-2">
+    <a th:href="@{/admin/users}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700 font-medium">Usuarios</a>
+    <a th:href="@{/admin/orders}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Pedidos</a>
+    <a th:href="@{/admin/quotes}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Cotizaciones</a>
+    <a th:href="@{/admin/products}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Productos</a>
+    <a th:href="@{/admin/promotions}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Carousel</a>
+    <a th:href="@{/admin/logout}" class="block px-4 py-2 rounded hover:bg-red-100 text-red-600">Cerrar sesión</a>
+  </nav>
+</div>
+
+<!-- Main Content -->
+<div class="flex-1 p-10">
+  <h1 class="text-3xl font-bold text-gray-700 mb-8">Detalles del Usuario</h1>
+
+  <div class="bg-white shadow-md rounded-lg p-8 border border-gray-200 max-w-4xl">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase">Nombre</label>
+        <div class="mt-1 font-medium" th:text="${usuario.name}">Juan Pérez</div>
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase">Email</label>
+        <div class="mt-1 font-medium" th:text="${usuario.email}">juan@example.com</div>
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase">Teléfono</label>
+        <div class="mt-1 font-medium" th:text="${usuario.telefono}">123456789</div>
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase">Activo</label>
+        <span class="mt-1 font-medium"
+              th:text="${usuario.activo} ? 'Sí' : 'No'"
+              th:classappend="${usuario.activo} ? 'text-green-600' : 'text-red-600'">Sí</span>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-gray-500 text-xs uppercase">Dirección</label>
+        <div class="mt-1 font-medium">
+          <span th:text="${usuario.calle}">Calle Falsa 123</span><br/>
+          <span th:text="${usuario.ciudad} + ', ' + ${usuario.estado}">Springfield, IL</span><br/>
+          <span th:text="${usuario.pais} + ' - ' + ${usuario.codigoPostal}">EE.UU. - 62704</span>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase">Creado el</label>
+        <div class="mt-1 font-medium" th:if="${usuario.createdAt != null}">
+          <span th:text="${usuario.createdAt.toString()}"></span>
+        </div>
+        <div class="mt-1 font-medium" th:unless="${usuario.createdAt != null}"><span th:text="'---'"></span></div>
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase">Última actualización</label>
+        <div class="mt-1 font-medium" th:if="${usuario.updatedAt != null}">
+          <span th:text="${usuario.updatedAt.toString()}"></span>
+        </div>
+        <div class="mt-1 font-medium" th:unless="${usuario.updatedAt != null}"><span th:text="'---'"></span></div>
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <a th:href="@{/admin/users}" class="text-blue-600 hover:underline text-sm">← Volver a la lista</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

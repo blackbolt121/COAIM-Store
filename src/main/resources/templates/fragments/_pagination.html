@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="pagination-controls(page)" th:if="${page.totalPages > 0}" class="flex items-center justify-between mt-6" aria-label="Pagination">
+
+    <span class="text-sm text-gray-600">
+        Mostrando de
+        <span class="font-semibold text-gray-800" th:text="${page.number * page.size + 1}">1</span>
+        a
+        <span class="font-semibold text-gray-800" th:text="${page.number * page.size + page.numberOfElements}">10</span>
+        de
+        <span class="font-semibold text-gray-800" th:text="${page.totalElements}">57</span>
+        resultados
+    </span>
+
+    <nav>
+        <ul class="inline-flex items-center -space-x-px">
+            <li>
+                <a th:href="@{''(page=${page.number - 1}, name=${param.name}, categories=${param.categories}, minPrice=${param.minPrice}, maxPrice=${param.maxPrice}, brand=${param.brand})}"
+                   th:classappend="${page.isFirst()} ? 'pointer-events-none text-gray-400' : 'text-gray-500 hover:bg-gray-100'"
+                   class="px-3 py-2 ml-0 leading-tight bg-white border border-gray-300 rounded-l-lg">
+                    Anterior
+                </a>
+            </li>
+
+            <li th:each="pageNumber : ${pageNumbers}">
+                <a th:href="@{''(page=${pageNumber - 1}, name=${param.name}, categories=${param.categories}, minPrice=${param.minPrice}, maxPrice=${param.maxPrice}, brand=${param.brand})}"
+                   th:text="${pageNumber}"
+                   th:classappend="${pageNumber == page.number + 1} ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white hover:bg-gray-100'"
+                   class="px-3 py-2 leading-tight border border-gray-300">
+                </a>
+            </li>
+
+            <li>
+                <a th:href="@{''(page=${page.number + 1}, name=${param.name}, categories=${param.categories}, minPrice=${param.minPrice}, maxPrice=${param.maxPrice}, brand=${param.brand})}"
+                   th:classappend="${page.isLast()} ? 'pointer-events-none text-gray-400' : 'text-gray-500 hover:bg-gray-100'"
+                   class="px-3 py-2 leading-tight bg-white border border-gray-300 rounded-r-lg">
+                    Siguiente
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+</body>
+</html>

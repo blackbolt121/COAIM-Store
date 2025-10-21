@@ -1,0 +1,68 @@
+packer-manifest.json
+# Archivos de compilación de Java (Spring Boot)
+.gradle/
+build/
+bin/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.hprof
+*.pid
+*.log
+*.seed
+*.pid
+.DS_Store
+
+# Archivos de compilación de React
+node_modules/
+build/
+public/build/
+package-lock.json
+yarn-error.log
+.gradle/
+
+# Archivos de Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.dump
+crash.*.log
+*.tfvars
+override.tf
+override-*.tf
+
+# Archivos de Packer
+*.pkr.hcl.log
+packer-cache/
+packer-manifest.json
+
+# Archivos de IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales y de caché
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# Archivos de Docker
+.dockerignore
+node_modules/*
+*node_modules
+dist
+/build
+/static/assets/
+/build/classes
+/src/main/resources/static/*

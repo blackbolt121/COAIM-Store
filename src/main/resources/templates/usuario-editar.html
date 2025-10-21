@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Usuario</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+<!-- Sidebar -->
+<div class="w-64 bg-white border-r border-gray-200 shadow-lg">
+  <div class="p-4 text-xl font-bold border-b">
+    <a th:href="@{/admin/dashboard}">
+      <img src="/images/logo.png" alt="SmartShop" class="w-40" />
+    </a>
+  </div>
+  <nav class="p-4 space-y-2">
+    <a th:href="@{/admin/users}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700 font-medium">Usuarios</a>
+    <a th:href="@{/admin/orders}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Pedidos</a>
+    <a th:href="@{/admin/quotes}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Cotizaciones</a>
+    <a th:href="@{/admin/products}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Productos</a>
+    <a th:href="@{/admin/promotions}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Carousel</a>
+    <a th:href="@{/admin/logout}" class="block px-4 py-2 rounded hover:bg-red-100 text-red-600">Cerrar sesión</a>
+  </nav>
+</div>
+
+<!-- Main Content -->
+<div class="flex-1 p-10">
+  <h1 class="text-3xl font-bold text-gray-700 mb-8">Editar Usuario</h1>
+
+  <form th:action="@{/admin/users/save}" method="post" th:object="${usuario}" class="bg-white shadow-md rounded-lg p-8 border border-gray-200 max-w-4xl">
+    <!-- ID oculto -->
+    <input type="hidden" th:field="*{id}" />
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Nombre</label>
+        <input type="text" th:field="*{name}" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Email</label>
+        <input type="email" th:field="*{email}" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Teléfono</label>
+        <input type="text" th:field="*{telefono}" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Activo</label>
+        <select th:field="*{activo}" class="w-full border rounded px-3 py-2">
+          <option th:value="true">Sí</option>
+          <option th:value="false">No</option>
+        </select>
+      </div>
+
+      <!-- Dirección -->
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Calle</label>
+        <input type="text" th:field="*{calle}" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Ciudad</label>
+        <input type="text" th:field="*{ciudad}" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Estado</label>
+        <input type="text" th:field="*{estado}" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">País</label>
+        <input type="text" th:field="*{pais}" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Código Postal</label>
+        <input type="text" th:field="*{codigoPostal}" class="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label class="block text-gray-500 text-xs uppercase mb-1">Roles</label>
+        <div th:each="role : ${roles}">
+          <input type="checkbox"
+                 th:field="*{roles}"
+                 th:value="${role.id}"
+                 th:id="${'role_' + role.id}" />
+          <label th:for="${'role_' + role.id}" th:text="${role.name.replace('ROLE_', '').toLowerCase()}"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 flex items-center justify-between">
+      <a th:href="@{/admin/users}" class="text-blue-600 hover:underline text-sm">← Cancelar</a>
+      <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+        Guardar Cambios
+      </button>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>

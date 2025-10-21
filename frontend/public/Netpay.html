@@ -1,0 +1,48 @@
+<!-- public/netpay-checkout.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pago con NetPay</title>
+    <script src="https://docs.netpay.mx/cdn/js/latest/checkout.plus.js"></script>
+    <script>
+      window.onload = function () {
+        NetPay.init('pk_netpay_JGFtQNUFIENMlhkoBXdgiozmQ');
+        NetPay.setSandboxMode(true);
+        window.onPaymentSuccess = function (r) {
+          //console.log('Pago exitoso:', r);
+        };
+        window.onPaymentError = function (r) {
+          //console.error('Error en el pago:', r);
+        };
+      };
+    </script>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <button
+      id="netpay-checkout"
+      data-button-title="Continuar"
+      data-street1="Filosofos 100"
+      data-country="MX"
+      data-city="Monterrey"
+      data-postal-code="64700"
+      data-state="NL"
+      data-token="tokenAmount_PEoVBVmdBSVoHquCmitPtuvjW"
+      data-phone-number="8125877000"
+      data-email="accept@netpay.com.mx"
+      data-merchant-reference-code="folio-unico-214"
+      data-onsuccess="onPaymentSuccess"
+      data-onerror="onPaymentError"
+      data-product-count="5"
+      data-commerce-name="Nombre del comercio"
+    >
+      Pagar
+    </button>
+  </body>
+</html>

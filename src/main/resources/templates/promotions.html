@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Promociones</title>
+    <link rel="icon" type="image/x-icon" href="https://res.cloudinary.com/dv0hzntey/image/upload/v1754238574/urrea_g4nc5s.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-white border-r border-gray-200 shadow-lg">
+        <div class="p-4 text-xl font-bold border-b">
+            <a th:href="@{/admin/dashboard}">
+                <img src="/images/logo.png" alt="SmartShop" class="w-40" />
+            </a>
+        </div>
+        <nav class="p-4 space-y-2">
+            <a th:href="@{/admin/users}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Usuarios</a>
+            <a th:href="@{/admin/orders}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Pedidos</a>
+            <a th:href="@{/admin/quotes}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Cotizaciones</a>
+            <a th:href="@{/admin/products}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Productos</a>
+            <a th:href="@{/admin/promotions}" class="block px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold">Carousel</a>
+            <a th:href="@{/admin/logout}" class="block px-4 py-2 rounded hover:bg-red-100 text-red-600">Cerrar sesión</a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+        <div class="text-2xl font-semibold mb-6">
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Panel de Promociones</h2>
+            <a th:href="@{/admin/promotions/create}" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                Crear nueva promoción
+            </a>
+        </div>
+
+        <div class="overflow-x-auto bg-white shadow-md rounded">
+            <table class="min-w-full table-auto text-sm text-left text-gray-700">
+                <thead class="bg-gray-200 text-xs uppercase font-semibold text-gray-600">
+                <tr>
+                    <th class="px-4 py-2">Título</th>
+                    <th class="px-4 py-2">Inicio</th>
+                    <th class="px-4 py-2">Fin</th>
+                    <th class="px-4 py-2">Orden</th>
+                    <th class="px-4 py-2">Activa</th>
+                    <th class="px-4 py-2">Imagen</th>
+                    <th class="px-4 py-2">Acciones</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="promo : ${promotions}" class="border-t hover:bg-gray-50">
+                    <td class="px-4 py-2" th:text="${promo.title}"></td>
+                    <td class="px-4 py-2" th:text="${promo.startDate}"></td>
+                    <td class="px-4 py-2" th:text="${promo.endDate}"></td>
+                    <td class="px-4 py-2" th:text="${promo.displayOrder}"></td>
+                    <td class="px-4 py-2" th:text="${promo.active ? 'Sí' : 'No'}"></td>
+                    <td class="px-4 py-2">
+                        <img th:src="@{'/rest/api/1/promotions/' + ${promo.id} + '/image'}" width="100" class="rounded shadow"/>
+                    </td>
+                    <td class="px-4 py-2 space-x-2">
+                        <a th:href="@{'/admin/promotions/edit/' + ${promo.id}}"
+                           class="text-blue-500 hover:underline">Editar</a>
+                        <form th:action="@{'/admin/promotions/delete/' + ${promo.id}}" method="post"
+                              class="inline">
+                            <button type="submit" onclick="return confirm('¿Eliminar esta promoción?')"
+                                    class="text-red-500 hover:underline">
+                                Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

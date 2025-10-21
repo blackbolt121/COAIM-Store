@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # Set the MySQL root password
+      MYSQL_DATABASE: smartshop_db       # Name of the database
+      MYSQL_USER: user                   # Set the MySQL user
+      MYSQL_PASSWORD: userpassword       # Set the user password
+    ports:
+      - "3307:3306"  # Expose MySQL on the host's port 3306
+    networks:
+      - smartshop-net
+    volumes:
+      - mysql-data:/var/lib/mysql   # Persist data across container restarts
+
+  app:
+    build: .
+    container_name: smartshop-container
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/smartshop_db  # Connect Spring Boot to the MySQL service
+      SPRING_DATASOURCE_USERNAME: user  # Use the same username you set in MySQL
+      SPRING_DATASOURCE_PASSWORD: userpassword  # Use the same password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Automatically update the schema (you can change this for production)
+    ports:
+      - "8080:8080"  # Expose Spring Boot on port 8080
+    networks:
+      - smartshop-net
+
+networks:
+  smartshop-net:
+    driver: bridge
+
+volumes:
+  mysql-data:

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Página no Encontrada (404)</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+</head>
+<body class="flex min-h-screen bg-gray-50">
+
+<!-- ========== SECCIÓN DEL SIDEBAR ========== -->
+<div class="w-64 bg-white border-r border-gray-200 shadow-lg">
+    <div class="p-4 text-xl font-bold border-b">
+        <a th:href="@{/admin/dashboard}">
+            <img th:src="@{/images/logo.png}" alt="SmartShop" class="w-40" />
+        </a>
+    </div>
+    <nav class="p-4 space-y-2">
+        <a th:href="@{/admin/users}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Usuarios</a>
+        <a th:href="@{/admin/orders}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Pedidos</a>
+        <a th:href="@{/admin/quotes}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Cotizaciones</a>
+        <a th:href="@{/admin/products}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Productos</a>
+        <a th:href="@{/admin/promotions}" class="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700">Carousel</a>
+        <a th:href="@{/admin/logout}" class="block px-4 py-2 rounded hover:bg-red-100 text-red-600">Cerrar sesión</a>
+    </nav>
+</div>
+
+<!-- ========== CONTENIDO PRINCIPAL DE LA PÁGINA 404 ========== -->
+<div class="flex-1 p-10 flex items-center justify-center">
+    <div class="text-center">
+        <h1 class="text-9xl font-black text-gray-200">404</h1>
+        <p class="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            ¡Ups! Página no encontrada.
+        </p>
+        <p class="mt-4 text-gray-500">
+            Lo sentimos, no pudimos encontrar la página que estás buscando.
+        </p>
+        <a th:href="@{/admin/dashboard}"
+           class="mt-6 inline-block rounded-md bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring">
+            Volver al Inicio
+        </a>
+    </div>
+</div>
+
+</body>
+</html>
