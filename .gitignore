@@ -56,7 +56,7 @@ Thumbs.db
 *~
 *.bak
 *.tmp
-
+.env
 # Archivos de Docker
 .dockerignore
 node_modules/*

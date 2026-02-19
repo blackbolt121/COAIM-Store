@@ -23,7 +23,7 @@ public class Producto  implements Serializable {
     private UUID id;
     @Column(nullable = false)
     private String name;
-    @Column
+    @Column(unique = true)
     private String sku;
     @Column( columnDefinition = "TEXT")
     private String description;

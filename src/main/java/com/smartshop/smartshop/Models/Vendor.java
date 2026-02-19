@@ -20,6 +20,7 @@ public class Vendor {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String vendorId;
+    @Column(unique = true)
     private String vendorName;
     private String vendorEmail;
     private String vendorPhone;

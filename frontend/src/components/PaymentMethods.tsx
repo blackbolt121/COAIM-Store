@@ -67,7 +67,7 @@ export default function PaymentMethodsSection() {
                     <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight mb-5">
                         Métodos de Pago Aceptados
                     </h2>
-                    <div className="w-50 h-1 bg-red-600 mx-auto mb-5"></div>
+                    <div className="w-50 h-1 bg-blue-600 mx-auto mb-5"></div>
                     <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">Trabajamos con las plataformas de pago más seguras del mundo.</p>
                 </div>
 

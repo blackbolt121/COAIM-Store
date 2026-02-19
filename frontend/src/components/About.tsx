@@ -2,13 +2,14 @@
 // To install: npm install lucide-react
 // Or you can use a simple SVG or even text like •
 import { CheckCircle2 } from 'lucide-react';
+import logo from "../assets/logo.png"
 
 // A small component for section titles to keep the code clean
 interface SectionTitleProps {
     children: React.ReactNode;
 }
 const SectionTitle = ({ children } : SectionTitleProps) => (
-    <h3 className="text-2xl font-bold text-gray-800 mt-8 mb-4 border-b-2 border-red-600 pb-2">
+    <h3 className="text-2xl font-bold text-gray-800 mt-8 mb-4 border-b-2 border-blue-600 pb-2">
         {children}
     </h3>
 );
@@ -71,7 +72,7 @@ export default function About() {
                         <ul className="space-y-4 mt-4">
                             {values.map((value) => (
                                 <li key={value.name} className="flex items-start">
-                                    <CheckCircle2 className="h-6 w-6 text-red-600 mr-3 flex-shrink-0 mt-1" />
+                                    <CheckCircle2 className="h-6 w-6 text-blue-600 mr-3 flex-shrink-0 mt-1" />
                                     <div>
                                         <strong className="font-semibold text-gray-800">{value.name}:</strong>
                                         <span className="text-gray-700 ml-2">{value.description}</span>
@@ -85,21 +86,22 @@ export default function About() {
                     <section>
                         <SectionTitle>Política de Calidad</SectionTitle>
                         <p className="text-gray-700 leading-relaxed bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                            En <strong>Suferre</strong>, estamos firmemente comprometidos con cumplir y exceder los requerimientos de nuestros clientes. Aseguramos la calidad de nuestros <strong>productos</strong> y la excelencia en el servicio a través de la mejora continua de nuestros procesos y nuestro Sistema de Gestión de Calidad.
+                            En <strong>COAIM</strong>, estamos firmemente comprometidos con cumplir y exceder los requerimientos de nuestros clientes. Aseguramos la calidad de nuestros <strong>productos</strong> y la excelencia en el servicio a través de la mejora continua de nuestros procesos y nuestro Sistema de Gestión de Calidad.
                         </p>
                     </section>
 
                     {/* --- Footer Section --- */}
                     <div className="text-center mt-12 pt-8 border-t border-gray-200">
                         <p className="text-sm text-gray-500 mb-4">Powered by</p>
-                        <a href="https://coaim.com.mx" target="_blank" rel="noopener noreferrer" className="inline-block">
+                        <a href="https://coaim.com.mx" target="_blank" rel="noopener noreferrer" className="inline-block bg-[#0069DF] p-3 rounded-xl">
                             {/* Coloca la ruta a tu logo en el atributo src */}
                             {/* Por ejemplo: src="/logos/coaim-logo.png" */}
-                            <img
-                                src="https://res.cloudinary.com/dv0hzntey/image/upload/v1754237277/descarga-removebg-preview_scozrn.png"
-                                alt="Logo de COAIM"
-                                className="h-20 mx-auto hover:opacity-80 transition-opacity" // Puedes ajustar la altura (h-10) según lo necesites
-                            />
+                            {/*<img*/}
+                            {/*    src={logo}//"https://res.cloudinary.com/dv0hzntey/image/upload/v1754237277/descarga-removebg-preview_scozrn.png"*/}
+                            {/*    alt="Logo de COAIM"*/}
+                            {/*    className="h-20 mx-auto hover:opacity-80 transition-opacity" // Puedes ajustar la altura (h-10) según lo necesites*/}
+                            {/*/>*/}
+                            <img alt={"MercadoUrrea.com.mx"} src={logo} className="h-20 mx-auto hover:opacity-80 transition-opacity"/>
                         </a>
                     </div>
 

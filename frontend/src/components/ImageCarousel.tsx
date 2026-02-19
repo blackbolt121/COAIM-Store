@@ -39,23 +39,23 @@ const ImageCarousel = () => {
         const vendors = request.data
 
 
-        const arr: string[] = ["Urrea", "Surtek", "Lock"]
+        const arr: string[] = ["URREA", "SURTEK", "LOCK"]
 
         const vendorsArray = vendors.filter(vend => arr.includes(vend.vendorName)).map<VendorCarousel>(vend => {
             switch (vend.vendorName) {
-                case "Urrea":
+                case "URREA":
                     return {
                         "name": vend.vendorName,
                         "id": vend.vendorId,
                         "image": urrea
                     }
-                case "Surtek":
+                case "SURTEK":
                     return {
                         "name": vend.vendorName,
                         "id": vend.vendorId,
                         "image": surtex
                     }
-                case "Lock":
+                case "LOCK":
                     return {
                         "name": vend.vendorName,
                         "id": vend.vendorId,
@@ -91,7 +91,7 @@ const ImageCarousel = () => {
                 <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight mb-3">
                     Nuestros Proveedores de Confianza
                 </h2>
-                <div className="w-50 h-1 bg-red-600 mx-auto mb-10"></div>
+                <div className="w-50 h-1 bg-blue-600 mx-auto mb-10"></div>
                 {/* Descripción corta de la sección */}
                 <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
                     Trabajamos con marcas líderes en el mercado para asegurarte productos de la más alta calidad y durabilidad.

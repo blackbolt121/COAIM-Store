@@ -8,7 +8,7 @@ import ImageCarousel from './ImageCarousel';
 import { useNavigate } from 'react-router-dom';
 import PromotionsCarousel from './PromotionCarousel/PromotionCarousel';
 import ProductSection from "./ProductSection.tsx";
-import CategoriesSection from "../CategoriesSection.tsx";
+// import CategoriesSection from "../CategoriesSection.tsx";
 import PaymentMethodsSection from "./PaymentMethods.tsx";
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -31,7 +31,8 @@ const LandingPage = () => {
                     },
                 }
             );
-    
+
+            console.log(categories);
             if (response.status === 200) {
                 setCategories(response.data);
             }
@@ -83,7 +84,7 @@ const LandingPage = () => {
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
             {/* Header */}
-            <header className="bg-red-500 text-white p-6 text-center">
+            <header className="bg-blue-500 text-white p-6 text-center">
                 <Typography level="h3" sx={{ color: "white" }}>Compara miles de productos y sus precios, y toma la mejor decision</Typography>
                 <Typography level="body-lg" sx={{ color: "white" }}>Configura tu lista</Typography>
                 <Button variant="solid" color="primary" className="mt-4" onClick={()=>{
@@ -124,7 +125,7 @@ const LandingPage = () => {
                 {/*    </div>*/}
                 {/*))}*/}
                 {/*</div>*/}
-                <CategoriesSection title={"Explora Nuestras Categorías"} categories={categories} />
+                {/*<CategoriesSection title={"Explora Nuestras Categorías"} categories={categories} />*/}
             </div>
 
 

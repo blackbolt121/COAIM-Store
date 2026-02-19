@@ -29,15 +29,22 @@ export const removeTokens = () => {
 export async function validateToken() {
   const token = localStorage.getItem('access_token');
 
-  const headers =  {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
+  if(!token){
+    return false;
   }
 
+  const headers =  {
+    Authorization: `Bearer ${token}`
+  }
+
+  console.log(token);
+
   try {
-    await axios.post(`${apiUrl}/auth/validate`,null,{
+    const response = await axios.post<string>(`${apiUrl}/auth/validate`,null,{
       headers: headers,
     });
+    console.log(response);
+
   } catch {
     return false;
   }

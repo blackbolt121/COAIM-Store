@@ -62,7 +62,7 @@ const Help = ()=> {
     return <>
         <button
             onClick={() => setModalOpen(true)}
-            className="fixed bottom-6 right-6 bg-red-600 hover:bg-red-700 text-white h-16 w-16 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 z-30"
+            className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white h-16 w-16 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 z-30"
             aria-label="Abrir centro de ayuda"
         >
             {/* Icono de Ayuda (SVG) */}

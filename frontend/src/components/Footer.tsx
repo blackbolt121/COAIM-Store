@@ -3,7 +3,7 @@
 // import { FaFacebook, FaInstagram, FaEnvelope, FaWhatsapp, FaPhone } from 'react-icons/fa';
 // import { FaXTwitter } from "react-icons/fa6";
 import {ReactNode} from "react";
-import logo from "../assets/mercadourrea.svg"
+import logo from "../assets/logo.png"
 import {Link} from "react-router-dom";
 
 
@@ -44,7 +44,7 @@ const FooterLink = ({ href, children }: FooterLinkProps) => {
     return <li>
         <Link to={href} onClick={()=>{
             //console.log(href);
-        }} className="text-red-200 hover:text-white hover:underline transition-colors duration-300">
+        }} className="text-white hover:text-gray-200 hover:underline transition-colors duration-300">
             {children}
         </Link>
     </li>
@@ -55,7 +55,7 @@ const SocialIcon = ({ href, children, ariaLabel }: SocialLinkProps) => (
     <a
         href={href}
         aria-label={ariaLabel}
-        className="text-red-200 hover:text-white transform hover:scale-110 transition-transform duration-300"
+        className="text-white hover:gray-100 transform hover:scale-110 transition-transform duration-300"
         target="_blank"
         rel="noopener noreferrer"
     >
@@ -67,10 +67,10 @@ const SocialIcon = ({ href, children, ariaLabel }: SocialLinkProps) => (
 const Footer = () => {
     // Define tus colores aquí para fácil personalización
     const colors = {
-        background: "bg-red-600",
-        text: "text-red-100",
+        background: "bg-[#0069DF]",
+        text: "text-white",
         title: "text-white",
-        border: "border-red-400",
+        border: "border-blue-400",
     };
 
     return (
@@ -126,8 +126,8 @@ const Footer = () => {
                                 <p className="font-semibold text-white">Querétaro (El Pueblito)</p>
                                 <div className="mt-2 space-y-2 text-sm">
                                     <p className="flex items-start"><MapPinIcon /><span>Fracc. Lomas de Balvanera 5A, Balvanera, 76900</span></p>
-                                    <a href="mailto:suferred@gmail.com" className="flex items-center text-red-200 hover:text-white transition-colors duration-300"><EnvelopeIcon /><span>suferred@gmail.com</span></a>
-                                    <a href="https://api.whatsapp.com/send/?phone=%2B524422711285&text&type=phone_number&app_absent=0" className="flex items-center text-red-200 hover:text-white transition-colors duration-300"><WhatsAppIcon /><span>WhatsApp</span></a>
+                                    <a href="mailto:suferred@gmail.com" className="flex items-center text-white hover:text-gray-200 transition-colors duration-300"><EnvelopeIcon /><span>suferred@gmail.com</span></a>
+                                    <a href="https://api.whatsapp.com/send/?phone=%2B524422711285&text&type=phone_number&app_absent=0" className="flex items-center text-white hover:text-gray-200 transition-colors duration-300"><WhatsAppIcon /><span>WhatsApp</span></a>
                                 </div>
                             </div>
 
@@ -135,8 +135,8 @@ const Footer = () => {
                                 <p className="font-semibold text-white">Querétaro (Santa Rosa)</p>
                                 <div className="mt-2 space-y-2 text-sm">
                                     <p className="flex items-start"><MapPinIcon /><span>Prolongación Independencia #84 En Santa Rosa Jauregui.</span></p>
-                                    <a href="mailto:ventascoaimsa@gmail.com" className="flex items-center text-red-200 hover:text-white transition-colors duration-300"><EnvelopeIcon /><span>ventascoaimsa@gmail.com</span></a>
-                                    <a href="https://api.whatsapp.com/send/?phone=4461390550&text&type=phone_number&app_absent=0" className="flex items-center text-red-200 hover:text-white transition-colors duration-300"><WhatsAppIcon /><span>WhatsApp</span></a>
+                                    <a href="mailto:ventascoaimsa@gmail.com" className="flex items-center text-white hover:text-gray-200 transition-colors duration-300"><EnvelopeIcon /><span>ventascoaimsa@gmail.com</span></a>
+                                    <a href="https://api.whatsapp.com/send/?phone=4461390550&text&type=phone_number&app_absent=0" className="flex items-center text-gray-200 hover:text-white transition-colors duration-300"><WhatsAppIcon /><span>WhatsApp</span></a>
                                 </div>
                             </div>
 
@@ -147,9 +147,9 @@ const Footer = () => {
             </div>
 
             {/* Barra Inferior de Copyright */}
-            <div className="bg-red-900 bg-opacity-75 mt-8 py-4 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto text-center text-xs text-red-200">
-                    &copy; {new Date().getFullYear()} Mercado Urrea. Todos los derechos reservados.
+            <div className="bg-blue-900 bg-opacity-75 mt-8 py-4 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto text-center text-xs text-white">
+                    &copy; {new Date().getFullYear()} COAIM DEL BAJIO. Todos los derechos reservados.
                 </div>
             </div>
         </footer>

@@ -41,9 +41,7 @@ public interface ProductRepository extends JpaRepository<Producto, UUID> {
             " AND (:minPrice IS NULL OR p.price >= :minPrice)" +
             " AND (:maxPrice IS NULL OR p.price <= :maxPrice)" +
             " AND (:brand IS NULL OR p.vendor.vendorId = :brand)" +
-            " AND (p.urreaProduct.estatusInventario != 'No disponible')" +
-            " AND (p.name IS NOT NULL AND TRIM(LOWER(p.name)) NOT IN ('', 'sin nombre'))" +
-            " AND (p.urreaProduct.estatusInventario IS NOT NULL AND p.urreaProduct.estatusInventario != '')")
+            " AND (p.name IS NOT NULL AND TRIM(LOWER(p.name)) NOT IN ('', 'sin nombre'))")
     Page<Producto> findByFilters(@Param("name") String name,
                                  @Param("categories") List<String> categories,
                                  @Param("minPrice") Double minPrice,

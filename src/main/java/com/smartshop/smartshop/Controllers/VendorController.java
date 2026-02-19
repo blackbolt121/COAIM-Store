@@ -49,6 +49,10 @@ public class VendorController {
 
     @PostMapping
     public ResponseEntity<String> createVendor(@RequestBody Vendor vendor) {
+
+        if (vendorRepository.findByVendorName(vendor.getVendorName()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("{\"message\": \"Vendor with name exists\"}");
+        }
         vendorRepository.save(vendor);
         String id = vendor.getVendorId();
 

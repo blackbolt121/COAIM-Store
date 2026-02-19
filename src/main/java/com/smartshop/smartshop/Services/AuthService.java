@@ -97,7 +97,7 @@ public class AuthService {
             Logger.getGlobal().info("User login: " + auth.isAuthenticated());
         }catch (Exception exception){
             Logger.getGlobal().severe(exception.getMessage());
-            throw exception;
+            return null;
         }
 
 
