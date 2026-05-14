@@ -1,4 +1,4 @@
-from db.connect import connect
+from database.database import connect
 from typing import List, Any, Dict
 from models.Cliente import Cliente
 from fastapi import HTTPException
