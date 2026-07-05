@@ -1,10 +1,8 @@
 package com.smartshop.smartshop.Controllers;
 
 
-import ch.qos.logback.core.model.Model;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class ShopController {
@@ -34,6 +32,16 @@ public class ShopController {
         return "forward:/index.html";
     }
 
+    @GetMapping("/explorar")
+    public String explorar() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/producto")
+    public String productoSinId() {
+        return "forward:/index.html";
+    }
+
     @GetMapping("/producto/{id}")
     public String producto() {
         return "forward:/index.html";
@@ -49,8 +57,18 @@ public class ShopController {
         return "forward:/index.html";
     }
 
+    @GetMapping("/logout")
+    public String logout() {
+        return "forward:/index.html";
+    }
+
     @GetMapping("/pedidos")
     public String pedidos() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/pedido")
+    public String pedidoSinId() {
         return "forward:/index.html";
     }
 
@@ -61,6 +79,11 @@ public class ShopController {
 
     @GetMapping("/cotizaciones")
     public String cotizaciones() {
+        return "forward:/index.html";
+    }
+
+    @GetMapping("/cotizacion")
+    public String cotizacionSinId() {
         return "forward:/index.html";
     }
 

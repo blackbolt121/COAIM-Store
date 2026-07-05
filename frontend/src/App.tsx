@@ -127,7 +127,7 @@ function App() {
         </Routes>
       </div>
       <Footer />
-        <Help />
+      <Help />
     </>
   )
 }

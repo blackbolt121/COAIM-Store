@@ -56,17 +56,17 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public Page<Producto> search(@RequestParam String query, Pageable pageable){
+    public Page<Producto> search(@RequestParam("query") String query, Pageable pageable){
         return productRepository.buscarFullText(query, pageable);
     }
 
     @GetMapping("/all")
     public Page<Producto> getAllProducts(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Optional<List<String>> categories,  // Aceptando múltiples categorías
-            @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) String brand,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "categories", required = false) Optional<List<String>> categories,  // Aceptando múltiples categorías
+            @RequestParam(value = "minPrice", required = false) Double minPrice,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "brand", required = false) String brand,
             @PageableDefault(page = 0, size = 12) Pageable pageable) {
         if(name == null && (categories.isEmpty()) && minPrice == null && maxPrice == null && brand == null) {
             return productRepository.findAll(pageable);
@@ -90,7 +90,7 @@ public class ProductController {
         return ResponseEntity.ok(productRepository.findRandomProducts());
     }
     @GetMapping(path = "")
-    public ResponseEntity<Producto> getProduct(@RequestParam String id){
+    public ResponseEntity<Producto> getProduct(@RequestParam("id") String id){
         System.out.println(id);
         Producto product = service.getProduct(id).orElse(null);
         if(product != null){
@@ -99,7 +99,7 @@ public class ProductController {
         return ResponseEntity.notFound().build();
     }
     @PutMapping(path = "")
-    public ResponseEntity<String> updateProduct(@RequestParam String id, @RequestBody Producto updatedProduct){
+    public ResponseEntity<String> updateProduct(@RequestParam("id") String id, @RequestBody Producto updatedProduct){
 
 
         Producto search = service.getProduct(id).orElse(null);
