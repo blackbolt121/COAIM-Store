@@ -3,11 +3,9 @@ package com.smartshop.smartshop.Scheduled;
 import com.smartshop.smartshop.Controllers.UrreaProductRequest;
 import com.smartshop.smartshop.Models.*;
 import com.smartshop.smartshop.Repositories.*;
-import com.smartshop.smartshop.Services.ProductoService;
+import com.smartshop.smartshop.Services.UrreaProductLoadProcessor;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.Unirest;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -16,11 +14,12 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Optional;
 import java.util.Set;
 
@@ -29,9 +28,9 @@ import java.util.Set;
 public class UrreaProductFetch {
 
     private final UrreaProductRepository urreaProductRepository;
-    private final ProductRepository productRepository;
     private final VendorRepository vendorRepository;
-    private final ProductoService productoService;
+    private final UrreaProductLoadProcessor urreaProductLoadProcessor;
+    private final LoadDataErrorRepository loadDataErrorRepository;
     private final RoleRepository roleRepository;
     private final UserRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
@@ -43,9 +42,9 @@ public class UrreaProductFetch {
 
     public UrreaProductFetch(
             UrreaProductRepository urreaProductRepository,
-            ProductRepository productRepository,
             VendorRepository vendorRepository,
-            ProductoService productoService,
+            UrreaProductLoadProcessor urreaProductLoadProcessor,
+            LoadDataErrorRepository loadDataErrorRepository,
             RoleRepository roleRepository,
             UserRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
@@ -54,9 +53,9 @@ public class UrreaProductFetch {
             @Value("${smartshop.admin.default-password}") String adminPassword
     ) {
         this.urreaProductRepository = urreaProductRepository;
-        this.productRepository = productRepository;
         this.vendorRepository = vendorRepository;
-        this.productoService = productoService;
+        this.urreaProductLoadProcessor = urreaProductLoadProcessor;
+        this.loadDataErrorRepository = loadDataErrorRepository;
         this.roleRepository = roleRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
@@ -150,11 +149,9 @@ public class UrreaProductFetch {
     }
 
     @Async
-    @Transactional // Asegura que todas las operaciones de la base de datos se ejecuten en una sola transacción.
     public void fetchUrreaProductsAsync() {
         log.info("Iniciando la sincronización de productos Urrea en segundo plano...");
 
-        // ... (Tu código para llamar a la API de Urrea permanece igual) ...
         final JSONObject payload = new JSONObject()
                 .put("opcion", 4)
                 .put("usuario", "COAIM")
@@ -181,136 +178,79 @@ public class UrreaProductFetch {
 
             log.info("Se procesarán {} productos de Urrea.", products.length());
 
+            int processed = 0;
+            int inserted = 0;
+            int failed = 0;
+
             for (int i = 0; i < products.length(); i++) {
                 JSONObject productJson = products.getJSONObject(i);
+                processed++;
 
-                // Usamos la clase UrreaProductRequest mejorada
-                UrreaProductRequest productRequest = new UrreaProductRequest(
-                        productJson.optString("codigo"), productJson.optString("nombreLargo"),
-                        productJson.optString("DescripcionProducto"), productJson.optString("Marca"),
-                        productJson.optString("Submarca"), productJson.optString("familia"),
-                        productJson.optString("clase"), productJson.optString("Subclase"),
-                        productJson.optString("Precio"), productJson.optString("Moneda"),
-                        productJson.optString("Multiplo"), productJson.optString("CodigoBarras"),
-                        productJson.optString("EstatusInventario"), productJson.optString("anexo20SAT"),
-                        productJson.optString("claveUnidadSAT"), productJson.optString("bullets"),
-                        productJson.optString("esJuego"), productJson.optString("piezasJuego"),
-                        productJson.optString("contenidoJuego"), productJson.optString("accesorios"),
-                        productJson.optString("garantia"), productJson.optString("empaque"),
-                        productJson.optString("keywords"), productJson.optString("fotografia"),
-                        productJson.optString("video"), productJson.optString("fichaTecnica"),
-                        productJson.optString("manual"), productJson.optString("alto"),
-                        productJson.optString("fondo"), productJson.optString("ancho"),
-                        productJson.optString("peso"), productJson.optString("caracteristica")
-                );
-
-                // --- LÓGICA CRUCIAL DE ACTUALIZAR O INSERTAR (UPSERT) ---
-                Optional<UrreaProduct> urreaProductOpt = urreaProductRepository.findByCodigoOrCodigoBarras(
-                        productJson.optString("codigo", ""),
-                        productJson.optString("CodigoBarras")
-                );
-
-                if (urreaProductOpt.isPresent()) {
-                    UrreaProduct productoExistente = urreaProductOpt.get();
-                    try{
-                        log.info("Producto existente");
-                        // SI EXISTE: Actualizamos los datos del producto existente
-                        log.info("Actualizando porducto");
-                        actualizarDatosProducto(productoExistente, productRequest);
-                        if( !productoExistente.getEstatusInventario().equalsIgnoreCase("no disponible") )
-                            productoService.saveUrreaProductToProduct(productoExistente);
-                    }catch (Exception e){
-                        log.error("Error al actualizar producto", e);
-                        log.info("{} {}",productoExistente.getCodigo(), productoExistente.getCodigoBarras());
+                try {
+                    urreaProductLoadProcessor.process(toRequest(productJson));
+                    inserted++;
+                } catch (Exception e) {
+                    failed++;
+                    String codigo = productJson.optString("codigo", "");
+                    String codigoBarras = productJson.optString("CodigoBarras", "");
+                    log.error("Falló carga de producto codigo={} codigoBarras={}: {}", codigo, codigoBarras, e.getMessage(), e);
+                    try {
+                        saveLoadError("urrea-products", codigo, codigoBarras, e);
+                    } catch (Exception errorSavingError) {
+                        log.warn("No se pudo guardar el error de carga para codigo={} codigoBarras={}: {}", codigo, codigoBarras, errorSavingError.getMessage());
                     }
-                } else {
-                    // NO EXISTE: Guardamos el nuevo producto
-                    UrreaProduct productEntity = productRequest.toEntity();
-                    try{
-                        log.info("Producto no existente");
-                        log.info("{} {}",productEntity.getCodigo(), productEntity.getCodigoBarras());
-                        UrreaProduct temp = urreaProductRepository.save(productEntity);
-                        log.info("Guardando urrea producto a producto");
-                        if( !productEntity.getEstatusInventario().equalsIgnoreCase("no disponible") )
-                            productoService.saveUrreaProductToProduct(temp);
-                    }catch (Exception e){
-                        log.info("{} {}",productEntity.getCodigo(), productEntity.getCodigoBarras());
-                    }
-
                 }
-
             }
 
-            // Sincronizar Marcas y Productos después de procesar todo el lote
-            sincronizarMarcasYProductos();
-
-            log.info("Sincronización de productos Urrea completada.");
+            log.info("Sincronización de productos Urrea completada. procesados={}, insertados={}, fallidos={}", processed, inserted, failed);
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("Error inesperado en la sincronización de productos Urrea", e);
         }
     }
 
-    /**
-     * Método auxiliar para actualizar los campos de una entidad existente
-     * con los datos de una nueva entidad.
-     */
-    private void actualizarDatosProducto(UrreaProduct existente, UrreaProductRequest request) {
-        // Se actualizan todos los campos relevantes de la entidad 'existente'
-        // usando los getters del objeto 'request'.
-
-        // --- Datos Principales ---
-        existente.setNombreLargo(request.nombreLargo());
-        existente.setDescripcionProducto(request.descripcionProducto());
-        existente.setMarca(request.marca());
-        existente.setSubmarca(request.submarca());
-        existente.setPrecio(Double.parseDouble(request.precio().isEmpty()? "0.0" : request.precio())); // Asegúrate que el tipo de dato coincida
-        existente.setMoneda(request.moneda());
-        existente.setMultiplo(Integer.parseInt(request.multiplo().isEmpty()? "0": request.multiplo()));
-        existente.setEstatusInventario(request.estatusInventario());
-        existente.setCodigoBarras(request.codigoBarras());
-
-        // --- Categorización ---
-        existente.setFamilia(request.familia());
-        existente.setClase(request.clase());
-        existente.setSubclase(request.subclase());
-
-        // --- Datos Técnicos y Descriptivos ---
-        existente.setBullets(request.bullets());
-        existente.setCaracteristica(request.caracteristica());
-        existente.setContenidoJuego(request.contenidoJuego());
-        existente.setAccesorios(request.accesorios());
-        existente.setGarantia(request.garantia());
-        existente.setEmpaque(request.empaque());
-        existente.setKeywords(request.keywords());
-
-        // --- Datos Fiscales (SAT) ---
-        existente.setClaveUnidadSAT(request.claveUnidadSAT());
-
-        // --- Multimedia y Documentos ---
-        existente.setFotografia(request.fotografia());
-        existente.setVideo(request.video());
-        existente.setFichaTecnica(request.fichaTecnica());
-
-        // --- Dimensiones y Peso ---
-        existente.setAlto(Double.parseDouble(request.alto().isEmpty()? "0.0": request.alto() ));
-        existente.setFondo(Double.parseDouble(request.fondo().isEmpty()? "0.0": request.fondo() ));
-        existente.setAncho(Double.parseDouble(request.ancho().isEmpty()? "0.0": request.ancho() ));
-        existente.setPeso(Double.parseDouble(request.peso().isEmpty()? "0.0": request.peso() ));
+    private UrreaProductRequest toRequest(JSONObject productJson) {
+        return new UrreaProductRequest(
+                productJson.optString("codigo"), productJson.optString("nombreLargo"),
+                productJson.optString("DescripcionProducto"), productJson.optString("Marca"),
+                productJson.optString("Submarca"), productJson.optString("familia"),
+                productJson.optString("clase"), productJson.optString("Subclase"),
+                productJson.optString("Precio"), productJson.optString("Moneda"),
+                productJson.optString("Multiplo"), productJson.optString("CodigoBarras"),
+                productJson.optString("EstatusInventario"), productJson.optString("anexo20SAT"),
+                productJson.optString("claveUnidadSAT"), productJson.optString("bullets"),
+                productJson.optString("esJuego"), productJson.optString("piezasJuego"),
+                productJson.optString("contenidoJuego"), productJson.optString("accesorios"),
+                productJson.optString("garantia"), productJson.optString("empaque"),
+                productJson.optString("keywords"), productJson.optString("fotografia"),
+                productJson.optString("video"), productJson.optString("fichaTecnica"),
+                productJson.optString("manual"), productJson.optString("alto"),
+                productJson.optString("fondo"), productJson.optString("ancho"),
+                productJson.optString("peso"), productJson.optString("caracteristica")
+        );
     }
 
-    /**
-     * Sincroniza las marcas (Vendors) y los productos disponibles en la tabla principal.
-     */
-    private void sincronizarMarcasYProductos() {
-        log.info("Iniciando sincronización de Marcas y Productos finales...");
+    private void saveLoadError(String source, String codigo, String codigoBarras, Exception exception) {
+        LoadDataError error = LoadDataError.builder()
+                .source(source)
+                .codigo(truncate(codigo, 50))
+                .codigoBarras(truncate(codigoBarras, 80))
+                .message(truncate(exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage(), 1000))
+                .details(truncate(stackTraceToString(exception), 60000))
+                .build();
 
-        // Sincronizar Marcas (Vendors)
-        loadMarcas();
+        loadDataErrorRepository.save(error);
+    }
 
-        // Sincronizar Productos Disponibles
-        urreaProductRepository.findByProductosDisponible().forEach(productoService::saveUrreaProductToProduct);
+    private String stackTraceToString(Throwable throwable) {
+        StringWriter stringWriter = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(stringWriter));
+        return stringWriter.toString();
+    }
 
-        log.info("Sincronización de Marcas y Productos finalizada.");
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
     }
 }

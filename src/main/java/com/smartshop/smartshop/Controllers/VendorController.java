@@ -60,7 +60,7 @@ public class VendorController {
     }
 
     @PutMapping(path = "{vendorId}")
-    public ResponseEntity<String> updateVendor(@PathVariable String vendorId, @RequestBody Vendor updatedVendor) {
+    public ResponseEntity<String> updateVendor(@PathVariable("vendorId") String vendorId, @RequestBody Vendor updatedVendor) {
 
 
         try {
@@ -76,7 +76,7 @@ public class VendorController {
     }
 
     @DeleteMapping(path = "{vendorId}")
-    public ResponseEntity<String> deleteVendor(@PathVariable String vendorId) {
+    public ResponseEntity<String> deleteVendor(@PathVariable("vendorId") String vendorId) {
         Optional<Vendor> vendor = vendorRepository.findById(vendorId);
         vendor.ifPresent(vendorRepository::delete);
         return ResponseEntity.ok().build();

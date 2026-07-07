@@ -44,7 +44,7 @@ public class CartController {
     }
 
     @PostMapping("/order/{id}")
-    public ResponseEntity<String> addPayment(@PathVariable String id, @RequestBody Map<String, Object> body){
+    public ResponseEntity<String> addPayment(@PathVariable("id") String id, @RequestBody Map<String, Object> body){
 
 
         String transactionId = (String) body.get("transactionId");
@@ -75,7 +75,7 @@ public class CartController {
     }
 
     @GetMapping("/order/{id}")
-    public ResponseEntity<CartResponseDto> getCart(@PathVariable String id) {
+    public ResponseEntity<CartResponseDto> getCart(@PathVariable("id") String id) {
 
         log.info(String.valueOf(id));
         try{
@@ -97,7 +97,7 @@ public class CartController {
     }
 
     @PutMapping("/order/{id}")
-    public ResponseEntity<CartResponseDto> setCart(@PathVariable String id, @RequestBody CartItemRequest[] itemRequest) {
+    public ResponseEntity<CartResponseDto> setCart(@PathVariable("id") String id, @RequestBody CartItemRequest[] itemRequest) {
 
         Cart cart = cartService.getCartById(id);
 

@@ -1,54 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import type { ElementType } from "react";
 import { Product } from "../../store/store";
 import axios from "axios";
 import { getAccessToken } from "../../store/auth";
 import { ProductoHorizontal } from "./ProductoHorizontal";
 import { useSearchParams } from "react-router-dom";
 import { Package, Truck, ShieldCheck, Clock, SearchX } from "lucide-react";
-import Pagination from '@mui/material/Pagination';
-import useMediaQuery from '@mui/material/useMediaQuery';
+import Pagination from "@mui/material/Pagination";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import SearchComponent from "./SearchComponent.tsx";
 import FiltersSidebar from "./FiltersSideBar.tsx";
+import { ApiResponse } from "../../types/APIResponse.ts";
 
 const apiUrl = import.meta.env.VITE_API_URL;
-
-interface AllProductRequest {
-    content: Product[],
-    pageable: {
-        "pageNumber": number,
-        "pageSize": number,
-        "sort": {
-            "empty": boolean,
-            "sorted": boolean,
-            "unsorted": boolean
-        },
-        "offset": number,
-        "paged": boolean,
-        "unpaged": boolean
-    },
-    "last": boolean,
-    "totalPages": number,
-    "totalElements": number,
-    "first": boolean,
-    "size": number,
-    "number": number,
-    "sort": {
-        "empty": boolean,
-        "sorted": boolean,
-        "unsorted": boolean
-    },
-    "numberOfElements": number,
-    "empty": boolean
-}
 
 export interface FiltersInterface {
     category: string;
     minPrice: string;
     maxPrice: string;
     brand: string;
+    sort: "relevance" | "price_asc" | "price_desc";
 }
 
-const TrustBadge = ({ icon: Icon, label, sub }: { icon: React.ElementType; label: string; sub: string }) => (
+const TrustBadge = ({ icon: Icon, label, sub }: { icon: ElementType; label: string; sub: string }) => (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 backdrop-blur-sm">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/20">
             <Icon className="h-4 w-4" />
@@ -60,79 +34,104 @@ const TrustBadge = ({ icon: Icon, label, sub }: { icon: React.ElementType; label
     </div>
 );
 
+const getFiltersFromParams = (params: URLSearchParams): FiltersInterface => ({
+    category: params.get("category") || "",
+    minPrice: params.get("minPrice") || "",
+    maxPrice: params.get("maxPrice") || "",
+    brand: params.get("brand") || "",
+    sort: (params.get("sort") as FiltersInterface["sort"]) || "relevance",
+});
+
 export const Tienda = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const initialFilters = {
-        category: searchParams.get("category") || "",
-        minPrice: searchParams.get("minPrice") || "",
-        maxPrice: searchParams.get("maxPrice") || "",
-        brand: searchParams.get("brand") || "",
-    };
+    const [products, setProducts] = useState<Product[]>([]);
+    const [total, setTotal] = useState<number>(0);
+    const [numPages, setNumPages] = useState<number>(1);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     const isLargeScreen = useMediaQuery("(max-width: 600px)");
 
-    const initialPage = parseInt(searchParams.get("page") || "1");
-    const [products, setProducts] = useState<Product[]>([]);
-    const [filters, setFilters] = useState<FiltersInterface>(initialFilters);
-    const [total, setTotal] = useState<number>(0);
-    const [numPages, setNumPages] = useState<number>(1);
-    const [page, setPage] = useState<number>(initialPage);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-
-    useEffect(() => {
-        setFilters({
-            category: searchParams.get("category") || "",
-            minPrice: searchParams.get("minPrice") || "",
-            maxPrice: searchParams.get("maxPrice") || "",
-            brand: searchParams.get("brand") || "",
-        });
-        setPage(parseInt(searchParams.get("page") || "1"));
-    }, []);
-
-    useEffect(() => {
-        const newParams: Record<string, string> = {
-            page: page.toString(),
-        };
-        if (filters.category) newParams.category = filters.category;
-        if (filters.minPrice) newParams.minPrice = filters.minPrice;
-        if (filters.maxPrice) newParams.maxPrice = filters.maxPrice;
-        if (filters.brand) newParams.brand = filters.brand;
-        setSearchParams(newParams);
-    }, [filters, page, setSearchParams]);
+    // Fuente única de verdad: la URL
+    const page = parseInt(searchParams.get("page") || "1");
+    const initialQuery = searchParams.get("q") || "";
+    const isSearchMode = initialQuery.trim().length > 0;
+    const filters = useMemo(() => getFiltersFromParams(searchParams), [searchParams]);
 
     useEffect(() => {
         async function loadProducts() {
             setIsLoading(true);
             try {
+                const currentPage = parseInt(searchParams.get("page") || "1");
+                const query = searchParams.get("q") || "";
+                const category = searchParams.get("category") || "";
+                const brand = searchParams.get("brand") || "";
+                const minPrice = searchParams.get("minPrice") || "";
+                const maxPrice = searchParams.get("maxPrice") || "";
+                const sort = searchParams.get("sort") || "relevance";
+                const isSearch = query.trim().length > 0;
+
                 const queryParams = new URLSearchParams();
-                queryParams.append("page", (page - 1).toString());
+                queryParams.append("page", Math.max(currentPage - 1, 0).toString());
+                queryParams.append("size", "12");
 
-                if (filters.category) queryParams.append("categories", filters.category);
-                if (filters.minPrice) queryParams.append("minPrice", filters.minPrice);
-                if (filters.maxPrice && parseInt(filters.maxPrice) > parseInt(filters.minPrice)) queryParams.append("maxPrice", filters.maxPrice);
-                if (filters.brand) queryParams.append("brand", filters.brand);
+                if (isSearch) {
+                    queryParams.append("q", query.trim());
+                    if (category) queryParams.append("category", category);
+                    if (brand) queryParams.append("brand", brand);
+                    if (minPrice) queryParams.append("minPrice", minPrice);
+                    if (maxPrice) queryParams.append("maxPrice", maxPrice);
+                    if (sort !== "relevance") queryParams.append("sort", sort);
 
-                const url = `${apiUrl}/rest/api/1/producto/all?${queryParams.toString()}`;
+                    const productRequest = await axios.get<ApiResponse>(
+                        `${apiUrl}/rest/api/1/producto/search?${queryParams.toString()}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${getAccessToken()}`,
+                                "Content-Type": "application/json",
+                                Accept: "application/json",
+                            },
+                        }
+                    );
 
-                const productRequest = await axios.get<AllProductRequest>(url, {
-                    headers: {
-                        Authorization: `Bearer ${getAccessToken()}`,
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                    },
-                });
+                    if (productRequest.status !== 200) {
+                        setProducts([]);
+                        setTotal(0);
+                        setNumPages(1);
+                        return;
+                    }
 
-                if (productRequest.status !== 200) {
-                    setProducts([]);
-                    setTotal(0);
-                    setNumPages(1);
-                    return;
+                    setProducts(productRequest.data.content);
+                    setTotal(productRequest.data.totalElements);
+                    setNumPages(productRequest.data.totalPages || 1);
+                } else {
+                    if (category) queryParams.append("categories", category);
+                    if (minPrice) queryParams.append("minPrice", minPrice);
+                    if (maxPrice && parseInt(maxPrice) > parseInt(minPrice || "0")) queryParams.append("maxPrice", maxPrice);
+                    if (brand) queryParams.append("brand", brand);
+
+                    const productRequest = await axios.get<ApiResponse>(
+                        `${apiUrl}/rest/api/1/producto/all?${queryParams.toString()}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${getAccessToken()}`,
+                                "Content-Type": "application/json",
+                                Accept: "application/json",
+                            },
+                        }
+                    );
+
+                    if (productRequest.status !== 200) {
+                        setProducts([]);
+                        setTotal(0);
+                        setNumPages(1);
+                        return;
+                    }
+
+                    setProducts(productRequest.data.content);
+                    setTotal(productRequest.data.totalElements);
+                    setNumPages(productRequest.data.totalPages || 1);
                 }
-
-                setProducts(productRequest.data.content);
-                setTotal(productRequest.data.totalElements);
-                setNumPages(productRequest.data.totalPages);
             } catch (error) {
                 console.log("Error fetching products", error);
                 setProducts([]);
@@ -142,18 +141,61 @@ export const Tienda = () => {
                 setIsLoading(false);
             }
         }
+
         loadProducts();
-    }, [filters.maxPrice, filters.brand, filters.minPrice, filters.category, page]);
+    }, [searchParams]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, [page]);
+    }, [searchParams]);
 
-    const hasActiveFilters = filters.category || filters.minPrice || filters.maxPrice || filters.brand;
+    const hasActiveFilters = Boolean(
+        searchParams.get("category") ||
+        searchParams.get("minPrice") ||
+        searchParams.get("maxPrice") ||
+        searchParams.get("brand") ||
+        (isSearchMode && searchParams.get("sort") !== "relevance")
+    );
+
+    const clearSearch = () => {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("q");
+        newParams.set("page", "1");
+        setSearchParams(newParams, { replace: true });
+    };
+
+    const handleFilterChange = (key: keyof FiltersInterface, value: string) => {
+        const newParams = new URLSearchParams(searchParams);
+        if (value) {
+            newParams.set(key, value);
+        } else {
+            newParams.delete(key);
+        }
+        if (key !== "sort") {
+            newParams.set("page", "1");
+        }
+        setSearchParams(newParams, { replace: true });
+    };
+
+    const handleClearFilters = () => {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("category");
+        newParams.delete("minPrice");
+        newParams.delete("maxPrice");
+        newParams.delete("brand");
+        newParams.delete("sort");
+        newParams.set("page", "1");
+        setSearchParams(newParams, { replace: true });
+    };
+
+    const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set("page", String(newPage));
+        setSearchParams(newParams, { replace: true });
+    };
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),rgba(248,250,252,1)_40%,rgba(226,232,240,1)_100%)]">
-            {/* Hero de la tienda */}
             <div className="relative overflow-hidden border-b border-red-900/20 bg-gradient-to-br from-red-950 via-red-900 to-red-800 text-white">
                 <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:48px_48px]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.10),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_24%)]" />
@@ -180,20 +222,35 @@ export const Tienda = () => {
                 </div>
             </div>
 
-            {/* Barra de búsqueda */}
             <div className="bg-white border-b border-slate-200/70 shadow-sm">
                 <div className="mx-auto max-w-screen-2xl px-4 py-5 sm:px-6 lg:px-8">
                     <SearchComponent />
                 </div>
             </div>
 
-            {/* Contenido principal */}
             <div className="mx-auto max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                {/* Encabezado de resultados */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                {isSearchMode && (
+                    <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Modo búsqueda</p>
+                            <p className="text-sm text-slate-700">
+                                Resultados para <span className="font-semibold text-slate-900">"{initialQuery}"</span>
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={clearSearch}
+                            className="inline-flex items-center justify-center rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-primary/30 hover:text-primary"
+                        >
+                            Limpiar búsqueda
+                        </button>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900">
-                            Todos los productos
+                            {isSearchMode ? "Resultados de búsqueda" : "Todos los productos"}
                         </h2>
                         <p className="text-sm text-slate-500 mt-0.5">
                             {isLoading ? "Cargando..." : `${total.toLocaleString("es-MX")} resultado${total !== 1 ? "s" : ""} encontrado${total !== 1 ? "s" : ""}`}
@@ -205,10 +262,8 @@ export const Tienda = () => {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Sidebar de filtros */}
-                    <FiltersSidebar filters={filters} setFilters={setFilters} />
+                    <FiltersSidebar filters={filters} onFilterChange={handleFilterChange} onClear={handleClearFilters} />
 
-                    {/* Grid de productos */}
                     <div className="flex-1 min-w-0">
                         {isLoading ? (
                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -243,16 +298,15 @@ export const Tienda = () => {
                 </div>
             </div>
 
-            {/* Paginación */}
             {numPages > 1 && !isLoading && (
                 <div className="pb-10 pt-4">
                     <Pagination
                         variant="outlined"
                         shape="rounded"
-                        size={isLargeScreen ? 'medium' : 'large'}
+                        size={isLargeScreen ? "medium" : "large"}
                         count={numPages}
                         page={page}
-                        onChange={(_, newPage) => setPage(newPage)}
+                        onChange={handlePageChange}
                         sx={{
                             display: "flex",
                             justifyContent: "center",

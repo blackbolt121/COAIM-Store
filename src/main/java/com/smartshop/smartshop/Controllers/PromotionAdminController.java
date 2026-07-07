@@ -58,7 +58,7 @@ public class PromotionAdminController {
     }
 
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable String id, Model model) {
+    public String showEditForm(@PathVariable("id") String id, Model model) {
         log.info("Showing promotion edit: " + id);
         Optional<Promotion> promo = promotionService.getById(id);
         if (promo.isEmpty()) return "redirect:/admin/promotions";
@@ -68,9 +68,9 @@ public class PromotionAdminController {
     }
 
     @PostMapping("/edit/{id}")
-    public String updatePromotion(@PathVariable String id,
-                                  @ModelAttribute Promotion updatedPromo,
-                                  @RequestParam(value = "imageFile", required = false) MultipartFile imageFile) {
+    public String updatePromotion(@PathVariable("id") String id,
+                                   @ModelAttribute Promotion updatedPromo,
+                                   @RequestParam(value = "imageFile", required = false) MultipartFile imageFile) {
         Optional<Promotion> promoOpt = promotionService.getById(id);
         if (promoOpt.isEmpty()) return "redirect:/admin/promotions";
         Promotion promotion = promoOpt.get();
@@ -96,7 +96,7 @@ public class PromotionAdminController {
     }
 
     @PostMapping("/edit/{id}/image")
-    public String updateImage(@PathVariable String id, @ModelAttribute Promotion promotion) throws Exception {
+    public String updateImage(@PathVariable("id") String id, @ModelAttribute Promotion promotion) throws Exception {
         Optional<Promotion> promoOpt = promotionService.getById(id);
         if (promoOpt.isEmpty()) return "redirect:/admin/promotions";
         Promotion promo = promoOpt.get();
@@ -111,7 +111,7 @@ public class PromotionAdminController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deletePromotion(@PathVariable String id) {
+    public String deletePromotion(@PathVariable("id") String id) {
         promotionService.deleteById(id);
         return "redirect:/admin/promotions";
     }

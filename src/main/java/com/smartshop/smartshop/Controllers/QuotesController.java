@@ -32,7 +32,7 @@ public class QuotesController {
     }
     
     @GetMapping("{id}")
-    public ResponseEntity<Cotizacion> getQuotesById(@PathVariable String id){
+    public ResponseEntity<Cotizacion> getQuotesById(@PathVariable("id") String id){
         log.info("getQuotesById {}", id);
         Cotizacion cotizacion = cotizacionRepository.findById(id).orElse(null);
         Usuario usuario = userService.getUserByContext();

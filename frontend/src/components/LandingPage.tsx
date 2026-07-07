@@ -85,11 +85,11 @@ const LandingPage = () => {
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),rgba(248,250,252,1)_40%,rgba(226,232,240,1)_100%)] text-slate-900">
             {/* Header */}
-            <header className="relative overflow-hidden border-b border-red-900/30 bg-gradient-to-br from-red-950 via-red-900 to-red-800 text-white">
-                <div className="absolute inset-0 opacity-[0.16] [background-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:48px_48px]" />
+            <header className="relative overflow-hidden border-b border-red-900/30 bg-linear-to-br from-red-950 via-red-900 to-red-800 text-white">
+                <div className="absolute inset-0 opacity-[0.16] [bg-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [bg-size:48px_48px]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.10),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_24%)]" />
-                <div className="absolute -top-24 right-[-6rem] h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-                <div className="absolute -bottom-20 left-[-4rem] h-64 w-64 rounded-full bg-black/10 blur-3xl" />
+                <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+                <div className="absolute -bottom-20 -left-16 h-64 w-64 rounded-full bg-black/10 blur-3xl" />
                 <div className="relative mx-auto grid max-w-screen-2xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-24">
                     <div className="flex flex-col justify-center text-left">
                         <div className="animate-fade-up inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-200 backdrop-blur">
@@ -105,7 +105,7 @@ const LandingPage = () => {
                             <Button
                                 variant="solid"
                                 color="primary"
-                                className="!rounded-full !px-6 !py-3 !font-semibold !shadow-lg !shadow-primary/20"
+                                className="rounded-full! px-6! py-3! font-semibold! shadow-lg! shadow-primary/20!"
                                 onClick={() => {
                                     navigate("/tienda")
                                 }}
@@ -115,7 +115,7 @@ const LandingPage = () => {
                             <Button
                                 variant="outlined"
                                 color="neutral"
-                                className="!rounded-full !border-white/30 !px-6 !py-3 !font-semibold !text-white hover:!bg-white/10"
+                                className="rounded-full! border-white/30! px-6! py-3! font-semibold! text-white! hover:bg-white/10!"
                                 sx={{
                                     borderColor: 'rgba(255,255,255,0.3)',
                                     color: 'white',
@@ -145,11 +145,11 @@ const LandingPage = () => {
                     </div>
 
                     <div className="relative">
-                        <div className="absolute inset-0 rounded-[2rem] border border-white/10 bg-white/[0.03]" />
+                        <div className="absolute inset-0 rounded-4xl border border-white/10 bg-white/3" />
 
                         <div className="relative grid gap-4 sm:grid-cols-2">
                             <div
-                                className="animate-fade-up sm:col-span-2 rounded-[1.75rem] border border-white/10 bg-white/[0.06] p-6 shadow-2xl shadow-black/20 backdrop-blur-md"
+                                className="animate-fade-up sm:col-span-2 rounded-[1.75rem] border border-white/10 bg-white/6 p-6 shadow-2xl shadow-black/20 backdrop-blur-md"
                                 style={{ animationDelay: '120ms' }}
                             >
                                 <div className="flex items-start justify-between gap-6">
@@ -227,7 +227,7 @@ const LandingPage = () => {
                                         className={
                                             variant === 'dark'
                                                 ? 'flex h-40 flex-col justify-between rounded-[1.15rem] bg-slate-950 p-4 text-white'
-                                                : 'flex h-40 flex-col justify-between rounded-[1.15rem] bg-gradient-to-br from-white to-red-50 p-4'
+                                                : 'flex h-40 flex-col justify-between rounded-[1.15rem] bg-linear-to-br from-white to-red-50 p-4'
                                         }
                                     >
                                         <div

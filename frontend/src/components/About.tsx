@@ -38,9 +38,9 @@ export default function About() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Hero oscuro con acentos sutiles */}
       <section className="relative overflow-hidden bg-slate-950 text-white">
-        <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:64px_64px]" />
+        <div className="absolute inset-0 opacity-[0.12] [bg-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [bg-size:64px_64px]" />
         <div className="absolute -top-20 right-0 h-96 w-96 rounded-full bg-primary/20 blur-[100px]" />
-        <div className="absolute -bottom-20 left-0 h-64 w-64 rounded-full bg-white/[0.03] blur-[80px]" />
+        <div className="absolute -bottom-20 left-0 h-64 w-64 rounded-full bg-white/3 blur-[80px]" />
 
         <div className="relative mx-auto max-w-screen-2xl px-4 py-20 sm:px-6 lg:py-28">
           <div className="mx-auto max-w-4xl text-center">
@@ -56,7 +56,7 @@ export default function About() {
 
             <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
               {stats.map(({ label, value, icon: Icon }) => (
-                <div key={label} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-sm">
+                <div key={label} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/3 p-5 backdrop-blur-sm">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
                     <Icon className="h-5 w-5" />
                   </div>
@@ -82,7 +82,7 @@ export default function About() {
         <br />
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Misión */}
-          <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-3 bg-slate-950 px-6 py-4 text-white">
               <Goal className="h-5 w-5" />
               <span className="text-sm font-bold uppercase tracking-[0.2em]">Misión</span>
@@ -96,7 +96,7 @@ export default function About() {
           </div>
 
           {/* Visión */}
-          <div className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center gap-3 bg-primary px-6 py-4 text-white">
               <Lightbulb className="h-5 w-5" />
               <span className="text-sm font-bold uppercase tracking-[0.2em]">Visión</span>

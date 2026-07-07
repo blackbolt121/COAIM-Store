@@ -53,6 +53,9 @@ public interface ProductRepository extends JpaRepository<Producto, UUID> {
 
     Optional<Producto> findByUrreaProduct(UrreaProduct urreaProduct);
 
+    @Query("SELECT p FROM Producto p LEFT JOIN FETCH p.urreaProduct LEFT JOIN FETCH p.vendor")
+    List<Producto> findAllForIndexing();
+
     Optional<Producto> findByIdOrSku(UUID uuid, String sku);
 
     Optional<Producto> findBySku(String sku);

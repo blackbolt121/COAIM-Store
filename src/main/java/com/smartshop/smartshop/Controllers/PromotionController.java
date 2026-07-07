@@ -31,7 +31,7 @@ public class PromotionController {
 
     // Obtener una promoción por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Promotion> getPromotionById(@PathVariable String id) {
+    public ResponseEntity<Promotion> getPromotionById(@PathVariable("id") String id) {
         Optional<Promotion> promoOpt = promotionService.getById(id);
         return promoOpt.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -39,7 +39,7 @@ public class PromotionController {
 
     // Obtener la imagen de la promoción
     @GetMapping("/{id}/image")
-    public ResponseEntity<byte[]> getImage(@PathVariable String id) {
+    public ResponseEntity<byte[]> getImage(@PathVariable("id") String id) {
         Optional<Promotion> promoOpt = promotionService.getById(id);
         if (promoOpt.isPresent() && promoOpt.get().getImage() != null) {
             byte[] image = promoOpt.get().getImage();
@@ -53,11 +53,11 @@ public class PromotionController {
     // Crear una nueva promoción con imagen
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createPromotion(
-            @RequestParam String title,
-            @RequestParam(defaultValue = "2025-01-01T00:00:00") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(defaultValue = "2025-12-31T23:59:59") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "0") Integer displayOrder,
-            @RequestParam(defaultValue = "true") boolean active,
+            @RequestParam("title") String title,
+            @RequestParam(value = "startDate", defaultValue = "2025-01-01T00:00:00") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(value = "endDate", defaultValue = "2025-12-31T23:59:59") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(value = "displayOrder", defaultValue = "0") Integer displayOrder,
+            @RequestParam(value = "active", defaultValue = "true") boolean active,
             @RequestParam("image") MultipartFile imageFile
     ) {
         try {
@@ -85,12 +85,12 @@ public class PromotionController {
     // Actualizar promoción existente (sin imagen)
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePromotion(
-            @PathVariable String id,
-            @RequestParam String title,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam Integer displayOrder,
-            @RequestParam boolean active
+            @PathVariable("id") String id,
+            @RequestParam("title") String title,
+            @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam("displayOrder") Integer displayOrder,
+            @RequestParam("active") boolean active
     ) {
         Optional<Promotion> promoOpt = promotionService.getById(id);
         if (promoOpt.isEmpty()) {
@@ -111,7 +111,7 @@ public class PromotionController {
     // Actualizar solo imagen
     @PutMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateImage(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             @RequestParam("image") MultipartFile imageFile
     ) {
         Optional<Promotion> promoOpt = promotionService.getById(id);
@@ -134,7 +134,7 @@ public class PromotionController {
 
     // Eliminar promoción
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePromotion(@PathVariable String id) {
+    public ResponseEntity<?> deletePromotion(@PathVariable("id") String id) {
         if (!promotionService.existsById(id)) {
             return ResponseEntity.notFound().build();
         }

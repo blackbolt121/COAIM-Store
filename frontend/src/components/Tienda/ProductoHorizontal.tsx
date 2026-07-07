@@ -1,12 +1,15 @@
 import { Product } from "../../store/store"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Eye } from "lucide-react"
 
 export const ProductoHorizontal = (producto: Product) => {
     const navigate = useNavigate()
+    const location = useLocation()
 
     const handleClick = () => {
-        navigate(`/producto/${encodeURIComponent(producto.id)}`)
+        navigate(`/producto/${encodeURIComponent(producto.id)}`, {
+            state: { from: location.pathname + location.search }
+        })
     }
 
     return (

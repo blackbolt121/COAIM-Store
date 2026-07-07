@@ -491,3 +491,9 @@ Debe combinar:
 
 Cada decisión visual debe tener un propósito comercial o de experiencia de usuario.
 
+
+## Building, lint, run unit testing, etc
+
+Always use pnpm for any of building, lint, dev, run, testing for running node commands
+Either for adding new packages use pnpm
+

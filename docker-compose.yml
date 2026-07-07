@@ -19,6 +19,25 @@ services:
       timeout: 5s
       retries: 20
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.13
+    container_name: meilisearch-container
+    environment:
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev-meili-master-key}
+    ports:
+      - "7700:7700"
+    networks:
+      - smartshop-net
+    volumes:
+      - meili-data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   app:
     build:
       context: .
@@ -27,12 +46,17 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      meilisearch:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-coaim}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-user}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-userpassword}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_API_KEY: ${MEILI_MASTER_KEY:-dev-meili-master-key}
+      MEILI_INDEX_PRODUCTS: ${MEILI_INDEX_PRODUCTS:-products}
     ports:
       - "8080:8080"
     networks:
@@ -44,3 +68,4 @@ networks:
 
 volumes:
   mysql-data:
+  meili-data:

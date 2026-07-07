@@ -99,7 +99,7 @@ const BranchCard = ({
 }: BranchCardProps) => (
   <div className="bg-white rounded-xl border border-gray-200 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary/30">
     <div className="flex items-center gap-3 mb-4">
-      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
         <FaMapMarkerAlt className="text-primary text-lg" />
       </div>
       <h3 className="font-bold text-gray-900">{name}</h3>
@@ -113,7 +113,7 @@ const BranchCard = ({
           href={`mailto:${email}`}
           className="flex items-center text-sm text-gray-700 hover:text-primary transition-colors duration-200"
         >
-          <FaEnvelope className="mr-2.5 text-amber-500 flex-shrink-0" />
+          <FaEnvelope className="mr-2.5 text-amber-500 shrink-0" />
           <span className="truncate">{email}</span>
         </a>
       )}
@@ -122,7 +122,7 @@ const BranchCard = ({
           href={`tel:${phone.replace(/\s/g, "")}`}
           className="flex items-center text-sm text-gray-700 hover:text-primary transition-colors duration-200"
         >
-          <FaPhone className="mr-2.5 text-primary/70 flex-shrink-0" />
+          <FaPhone className="mr-2.5 text-primary/70 shrink-0" />
           <span>{phone}</span>
         </a>
       )}
@@ -133,7 +133,7 @@ const BranchCard = ({
           rel="noopener noreferrer"
           className="flex items-center text-sm text-gray-700 hover:text-green-700 transition-colors duration-200"
         >
-          <FaWhatsapp className="mr-2.5 text-green-600 flex-shrink-0" />
+          <FaWhatsapp className="mr-2.5 text-green-600 shrink-0" />
           <span>{whatsappLabel}</span>
         </a>
       )}
@@ -146,8 +146,8 @@ export default function ContactPage() {
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* --- Hero --- */}
       <section className="relative bg-white overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-red-50/30 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-red-50/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-gray-50 via-white to-red-50/30 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-linear-to-l from-red-50/20 to-transparent pointer-events-none" />
 
         <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="max-w-3xl">
@@ -245,7 +245,7 @@ export default function ContactPage() {
               </div>
 
               <p className="text-sm text-gray-500 mt-4 flex items-start gap-2">
-                <FaMapMarkerAlt className="text-primary mt-0.5 flex-shrink-0" />
+                <FaMapMarkerAlt className="text-primary mt-0.5 shrink-0" />
                 Sucursal principal referenciada en el mapa: Fraccionamiento
                 Lomas de Balvanera 5A, Balvanera, 76908 El Pueblito, Qro.
               </p>

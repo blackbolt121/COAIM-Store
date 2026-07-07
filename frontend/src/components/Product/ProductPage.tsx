@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { Minus, Plus, ShoppingCart, CheckCircle, Truck, ShieldCheck, MessageCircle, ArrowLeft, ChevronRight } from 'lucide-react';
@@ -196,6 +196,8 @@ const ProductSkeleton = () => (
 
 export const ProductPage = () => {
     const { id } = useParams();
+    const location = useLocation();
+    const fromUrl = (location.state as any)?.from || "/tienda";
     const [product, setProduct] = useState<Product | null>(null);
     const [quantity, setQuantity] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
@@ -267,7 +269,7 @@ export const ProductPage = () => {
                         No pudimos cargar los detalles del producto. Es posible que no exista o haya un problema temporal.
                     </p>
                     <Link
-                        to="/tienda"
+                        to={fromUrl}
                         className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-red-700 hover:shadow-xl transition-all duration-200"
                     >
                         <ArrowLeft className="h-4 w-4" />
@@ -287,7 +289,7 @@ export const ProductPage = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-slate-500 mb-6 lg:mb-8" aria-label="Breadcrumb">
-                    <Link to="/tienda" className="hover:text-primary transition-colors font-medium">Tienda</Link>
+                    <Link to={fromUrl} className="hover:text-primary transition-colors font-medium">Tienda</Link>
                     <ChevronRight className="h-4 w-4 text-slate-300" />
                     <span className="text-slate-800 font-semibold truncate max-w-[200px] sm:max-w-md">{product.name}</span>
                 </nav>
