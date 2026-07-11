@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAccessToken, saveTokens } from "../store/auth";
+import { validateToken } from "../store/auth";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { TokenPayload } from "../types/TokenPayload";
@@ -16,7 +16,7 @@ import {
   FaEyeSlash,
   FaExclamationCircle,
 } from "react-icons/fa";
-import logo from "../assets/coaim-transparent.png";
+import logo from "../assets/siscadindustrial-recortado.svg";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -30,10 +30,11 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(function validateAccess() {
-    const token = getAccessToken();
-    if (token) {
-      navigate("/");
-    }
+    validateToken().then((valid) => {
+      if (valid) {
+        navigate("/");
+      }
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +59,7 @@ const Login = () => {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
+          withCredentials: true,
         }
       );
       if (auth.status !== 200) {
@@ -66,7 +68,13 @@ const Login = () => {
         return;
       }
       const credentials: TokenPayload = auth.data;
-      saveTokens(credentials.access_token, credentials.refresh_token);
+      console.log(credentials);
+      const sessionReady = await validateToken();
+      if (!sessionReady) {
+        setError("No se pudo iniciar la sesión.");
+        setIsLoading(false);
+        return;
+      }
       navigate("/");
     } catch (error) {
       setError("Correo o contraseña incorrectos.");
@@ -93,11 +101,13 @@ const Login = () => {
 
         <div className="relative z-10 p-12 flex flex-col h-full">
           <div className="mb-10">
-            <img
-              src={logo}
-              alt="SISCAD"
-              className="h-14 w-auto object-contain"
-            />
+            <div className="bg-white rounded-lg p-3 inline-block">
+              <img
+                src={logo}
+                alt="SISCAD"
+                className="h-14 w-auto object-contain"
+              />
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col justify-center">
@@ -158,7 +168,7 @@ const Login = () => {
           </div>
 
           <div className="mt-10 text-xs text-neutral-500">
-            &copy; {new Date().getFullYear()} COAIM DEL BAJIO. Todos los
+            &copy; {new Date().getFullYear()} SISCAD Industrial C.A. C.V.. Todos los
             derechos reservados.
           </div>
         </div>
@@ -169,11 +179,13 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Logo en mobile */}
           <div className="flex justify-center lg:hidden mb-8">
-            <img
-              src={logo}
-              alt="SISCAD"
-              className="h-12 w-auto object-contain"
-            />
+            <div className="bg-white rounded-lg p-3 inline-block">
+              <img
+                src={logo}
+                alt="SISCAD"
+                className="h-12 w-auto object-contain"
+              />
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 sm:p-10">
@@ -314,7 +326,7 @@ const Login = () => {
 
           <div className="mt-8 text-center lg:hidden">
             <p className="text-xs text-gray-400">
-              &copy; {new Date().getFullYear()} COAIM DEL BAJIO. Todos los
+              &copy; {new Date().getFullYear()} SISCAD Industrial C.A. C.V.. Todos los
               derechos reservados.
             </p>
           </div>

@@ -1,7 +1,6 @@
 import { Button, Typography } from '@mui/joy';
 import { useEffect } from 'react';
 import axios from 'axios';
-import { getAccessToken } from '../store/auth';
 import { Product } from '../store/store';
 import { useState } from 'react';
 import ImageCarousel from './ImageCarousel';
@@ -25,11 +24,7 @@ const LandingPage = () => {
             const response = await axios.get<string[]>(
                 `${apiUrl}/rest/api/1/producto/categorias`,
                 {
-                    headers: {
-                        Authorization: `Bearer ${getAccessToken()}`,
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                    },
+                    withCredentials: true,
                 }
             );
 
@@ -51,12 +46,10 @@ const LandingPage = () => {
             // console.log({
             //     "Content-Type": "application/json",
             //     "Accept": "application/json",
-            //     "Authorization": `Bearer ${getAccessToken()}`
+            //
             // })
             const productRequest = await axios.get<Product[]>(`${apiUrl}/rest/api/1/producto/top`, {
-                headers: {
-                    "Authorization": `Bearer ${getAccessToken()}`
-                }
+                withCredentials: true
             })
 
             //console.log(productRequest.status)

@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import type { ElementType } from "react";
 import { Product } from "../../store/store";
 import axios from "axios";
-import { getAccessToken } from "../../store/auth";
 import { ProductoHorizontal } from "./ProductoHorizontal";
 import { useSearchParams } from "react-router-dom";
 import { Package, Truck, ShieldCheck, Clock, SearchX } from "lucide-react";
@@ -86,11 +85,7 @@ export const Tienda = () => {
                     const productRequest = await axios.get<ApiResponse>(
                         `${apiUrl}/rest/api/1/producto/search?${queryParams.toString()}`,
                         {
-                            headers: {
-                                Authorization: `Bearer ${getAccessToken()}`,
-                                "Content-Type": "application/json",
-                                Accept: "application/json",
-                            },
+                            withCredentials: true,
                         }
                     );
 
@@ -113,11 +108,7 @@ export const Tienda = () => {
                     const productRequest = await axios.get<ApiResponse>(
                         `${apiUrl}/rest/api/1/producto/all?${queryParams.toString()}`,
                         {
-                            headers: {
-                                Authorization: `Bearer ${getAccessToken()}`,
-                                "Content-Type": "application/json",
-                                Accept: "application/json",
-                            },
+                            withCredentials: true,
                         }
                     );
 

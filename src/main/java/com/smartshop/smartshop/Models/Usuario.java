@@ -65,6 +65,7 @@ public class Usuario {
             joinColumns = @JoinColumn(name = "usuario_id"), // Columna que referencia a Usuario
             inverseJoinColumns = @JoinColumn(name = "roles_id") // Columna que referencia a Role
     )
+    @Builder.Default
     private Set<Pedidos> pedidos = new HashSet<>();
 
     @PrePersist

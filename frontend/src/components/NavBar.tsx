@@ -3,7 +3,6 @@ import { Button, Sheet, IconButton, Badge } from "@mui/joy";
 import { Menu, Close, ShoppingCart } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/siscadindustrial-recortado.svg" //"../assets/smarshop.png"
-import { getAccessToken } from "../store/auth";
 import { useSelector } from "react-redux";
 import { RootState } from '../store/store';
 import UserProfile from "./UserProfile.tsx";
@@ -16,12 +15,11 @@ import {useLocation} from "react-router-dom";
 const Navbar = () => {
   
   const cartItems = useSelector((state: RootState) => state.cart.items);
+  const user = useSelector((state: RootState) => state.user.usuario);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate()
-  const [token, setToken] = useState<string>("")
-  const [logText, setLogText] = useState<string>("Inicia sesión")
 
   const location = useLocation()
 
@@ -32,22 +30,6 @@ const Navbar = () => {
   const hideMenu = () => {
     setIsMobileMenuOpen(false);
   }
-
-  useEffect(()=>{
-    setToken(getAccessToken() || "")
-  }, [getAccessToken()])
-  
-  useEffect(()=>{
-    setToken(getAccessToken() || "")
-  }, [])
-
-  useEffect(()=>{
-    if(token){
-      setLogText("Cerrar sesión")
-    }else{
-      setLogText("Inicia sesión")
-    }
-  }, [token])
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -81,25 +63,16 @@ const Navbar = () => {
                   <ShoppingCart />
                 </Badge>
           </Link>
-          {(getAccessToken())? <UserProfile/> : <Button variant="solid" className="!rounded-full !px-5 !py-2.5 !text-sm !font-semibold !shadow-sm hover:!shadow-md !bg-primary !text-white hover:!bg-red-700 active:!bg-red-800" onClick={async () => {
-            if (getAccessToken()) {
-              localStorage.removeItem("access_token")
-              localStorage.removeItem("refresh_token")
-              //let request = await axios.post(`${apiUrl}/auth/logout`)
-              //console.log(getAccessToken())
-              navigate("/logout")
-            }else {
-              navigate("/login")
-            }
-
-          }}>
-            {logText}
-          </Button>}
+           {user?.email ? <UserProfile/> : <Button variant="solid" className="!rounded-full !px-5 !py-2.5 !text-sm !font-semibold !shadow-sm hover:!shadow-md !bg-primary !text-white hover:!bg-red-700 active:!bg-red-800" onClick={async () => {
+             navigate(user?.email ? "/logout" : "/login")
+           }}>
+            {user?.email ? "Cerrar sesión" : "Inicia sesión"}
+           </Button>}
         </div>
           
         {/* Mobile Menu Icon */}
         <div className="md:hidden flex gap-2 items-center">
-          {(getAccessToken())? <UserProfile/> : <></>}
+          {user?.email ? <UserProfile/> : <></>}
           <Link to="/cart" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"><IconButton variant="plain" color="neutral">
             <Badge badgeContent={cartItems.length} variant="solid" color="danger" size="sm">
               <ShoppingCart />
@@ -121,20 +94,12 @@ const Navbar = () => {
             <Link to="/about" onClick={hideMenu} className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${location.pathname == "/about"? "bg-primary text-white" : "text-slate-700 hover:bg-slate-100 hover:text-primary"}`}>Acerca</Link>
             <Link to="/contact" onClick={hideMenu} className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${location.pathname == "/contact"? "bg-primary text-white" : "text-slate-700 hover:bg-slate-100 hover:text-primary"}`}>Contacto</Link>
             <Link to="/tienda" onClick={hideMenu} className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${location.pathname == "/tienda"? "bg-primary text-white" : "text-slate-700 hover:bg-slate-100 hover:text-primary"}`}>Tienda</Link>
-            {(getAccessToken())? <></> : <Button variant="solid" className="mt-3 !rounded-full !py-3 !font-semibold !bg-primary !text-white hover:!bg-red-700 active:!bg-red-800" onClick={async () => {
+            {user?.email ? <></> : <Button variant="solid" className="mt-3 !rounded-full !py-3 !font-semibold !bg-primary !text-white hover:!bg-red-700 active:!bg-red-800" onClick={async () => {
               hideMenu()
-              if (getAccessToken()) {
-                localStorage.removeItem("access_token")
-                localStorage.removeItem("refresh_token")
-                //let request = await axios.post(`${apiUrl}/auth/logout`)
-                //console.log(getAccessToken())
-                navigate("/logout")
-              }else {
-                navigate("/login")
-              }
+              navigate("/login")
 
             }}>
-              {logText}
+              Inicia sesión
             </Button>}
           </div>
         </Sheet>

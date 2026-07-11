@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {ApiResponse} from "../../types/APIResponse.ts";
 import {Product} from "../../store/store.ts";
 import axios from "axios";
-import {getAccessToken} from "../../store/auth.ts";
 import {Link, useNavigate, useLocation} from "react-router-dom";
 import { Search, Loader2 } from "lucide-react";
 
@@ -51,11 +50,11 @@ const SearchComponent: React.FC = () => {
         try {
             const url = `${apiUrl}/rest/api/1/producto/search?q=${encodeURIComponent(searchQuery)}&page=0&size=6`;
             const response = await axios(url, {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${getAccessToken()}`
-                }
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              withCredentials: true
             });
 
             if (response.status >= 401) throw new Error("Network response was not ok");

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { TokenPayload } from "../types/TokenPayload";
-import { saveTokens, getAccessToken } from "../store/auth";
+import { validateToken } from "../store/auth";
 import municipiosPorEstado from "../estados.ts";
 import {
   FaUser,
@@ -24,7 +24,7 @@ import {
   FaHeadset,
   FaChevronDown,
 } from "react-icons/fa";
-import logo from "../assets/coaim-transparent.png";
+import logo from "../assets/siscadindustrial-recortado.svg";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -208,10 +208,11 @@ const Signup = () => {
   const [codigoPostal, setCodigoPostal] = useState("");
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (token) {
-      navigate("/");
-    }
+    validateToken().then((valid) => {
+      if (valid) {
+        navigate("/");
+      }
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -254,11 +255,18 @@ const Signup = () => {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
+          withCredentials: true,
         }
       );
 
       const tokenAuth: TokenPayload = request.data;
-      saveTokens(tokenAuth.access_token, tokenAuth.refresh_token);
+      console.log(tokenAuth);
+      const sessionReady = await validateToken();
+      if (!sessionReady) {
+        setError("No se pudo crear la sesión.");
+        setIsLoading(false);
+        return;
+      }
       navigate("/");
     } catch (err: any) {
       const message =
@@ -286,11 +294,13 @@ const Signup = () => {
 
         <div className="relative z-10 p-12 flex flex-col h-full">
           <div className="mb-10">
-            <img
-              src={logo}
-              alt="SISCAD"
-              className="h-14 w-auto object-contain"
-            />
+            <div className="bg-white rounded-lg p-3 inline-block">
+              <img
+                src={logo}
+                alt="SISCAD"
+                className="h-14 w-auto object-contain"
+              />
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col justify-center">
@@ -353,7 +363,7 @@ const Signup = () => {
           </div>
 
           <div className="mt-10 text-xs text-neutral-500">
-            &copy; {new Date().getFullYear()} COAIM DEL BAJIO. Todos los
+            &copy; {new Date().getFullYear()} SISCAD Industrial C.A. C.V.. Todos los
             derechos reservados.
           </div>
         </div>
@@ -364,11 +374,13 @@ const Signup = () => {
         <div className="w-full max-w-2xl">
           {/* Logo mobile */}
           <div className="flex justify-center lg:hidden mb-6">
-            <img
-              src={logo}
-              alt="SISCAD"
-              className="h-12 w-auto object-contain"
-            />
+            <div className="bg-white rounded-lg p-3 inline-block">
+              <img
+                src={logo}
+                alt="SISCAD"
+                className="h-12 w-auto object-contain"
+              />
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 lg:p-10">
@@ -602,7 +614,7 @@ const Signup = () => {
 
           <div className="mt-8 text-center lg:hidden">
             <p className="text-xs text-gray-400">
-              &copy; {new Date().getFullYear()} COAIM DEL BAJIO. Todos los
+              &copy; {new Date().getFullYear()} SISCAD Industrial C.A. C.V.. Todos los
               derechos reservados.
             </p>
           </div>

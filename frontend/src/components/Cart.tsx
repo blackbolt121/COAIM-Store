@@ -3,10 +3,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import { clearCart } from "../store/cartSlice";
 import { CartItem } from "../store/cartSlice";
-import { getAccessToken, validateToken, removeTokens } from "../store/auth";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ShoppingCart, ArrowLeft, Truck, ShieldCheck, MessageCircle, CheckCircle, ChevronRight } from "lucide-react";
 import CartItemCard from "./CartItemCard";
+import { apiFetch } from "../lib/apiFetch";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -18,29 +18,8 @@ const TrustPill = ({ icon: Icon, text }: { icon: React.ElementType; text: string
 );
 
 const Cart = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartItems = useSelector((state: RootState) => state.cart.items);
-
-  useEffect(() => {
-    const path = location.pathname;
-
-    const checkAuth = async () => {
-      const token = getAccessToken();
-      if (!token && path.startsWith("/cart")) {
-        navigate("/login");
-        return;
-      }
-
-      const isValid = await validateToken();
-      if (!isValid) {
-        removeTokens();
-        navigate("/login");
-      }
-    };
-
-    checkAuth();
-  }, [navigate]);
 
   const handleClearCart = () => {
     dispatch(clearCart());
@@ -56,11 +35,10 @@ const Cart = () => {
       if (cartId === null) {
         flag = true;
       } else {
-        const createCart = await fetch(`${apiUrl}/rest/api/1/cart/order/${cartId}`, {
+        const createCart = await apiFetch(`${apiUrl}/rest/api/1/cart/order/${cartId}`, {
           method: "GET",
           headers: {
             Accept: "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
           },
         });
 
@@ -74,11 +52,10 @@ const Cart = () => {
       }
 
       if (flag) {
-        const response = await fetch(`${apiUrl}/rest/api/1/cart/order`, {
+        const response = await apiFetch(`${apiUrl}/rest/api/1/cart/order`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify(
             cartItems.map((item: CartItem) => ({
@@ -92,11 +69,10 @@ const Cart = () => {
         cartId = cart.cartId;
         localStorage.setItem("cartId", String(cartId));
       } else {
-        await fetch(`${apiUrl}/rest/api/1/cart/order/${cartId}`, {
+        await apiFetch(`${apiUrl}/rest/api/1/cart/order/${cartId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: JSON.stringify(
             cartItems.map((item: CartItem) => ({
@@ -134,11 +110,10 @@ const Cart = () => {
     let flag = false;
 
     if (cartId != null) {
-      const createCart = await fetch(`${apiUrl}/rest/api/1/cart/order/${cartId}`, {
+      const createCart = await apiFetch(`${apiUrl}/rest/api/1/cart/order/${cartId}`, {
         method: "GET",
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${getAccessToken()}`,
         },
       });
 

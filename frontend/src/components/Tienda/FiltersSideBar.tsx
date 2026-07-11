@@ -2,7 +2,6 @@ import { ListFilter, ChevronDown, RotateCcw, SlidersHorizontal } from 'lucide-re
 import {useEffect, useState} from "react";
 import {Vendor} from "../../store/store.ts";
 import axios from "axios";
-import {getAccessToken} from "../../store/auth.ts";
 import {FiltersInterface} from "./Tienda.tsx";
 
 interface FiltersSideBarProps {
@@ -24,11 +23,7 @@ const FiltersSidebar = ({ filters, onFilterChange, onClear } : FiltersSideBarPro
                 const response = await axios.get<string[]>(
                     `${apiUrl}/rest/api/1/producto/categorias`,
                     {
-                        headers: {
-                            Authorization: `Bearer ${getAccessToken()}`,
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                        },
+                        withCredentials: true,
                     }
                 );
                 if (response.status === 200) {
@@ -43,11 +38,7 @@ const FiltersSidebar = ({ filters, onFilterChange, onClear } : FiltersSideBarPro
                 const response = await axios.get<Vendor[]>(
                     `${apiUrl}/rest/api/1/vendor/all`,
                     {
-                        headers: {
-                            Authorization: `Bearer ${getAccessToken()}`,
-                            "Content-Type": "application/json",
-                            Accept: "application/json",
-                        },
+                        withCredentials: true,
                     }
                 );
                 if (response.status === 200) {
@@ -92,7 +83,7 @@ const FiltersSidebar = ({ filters, onFilterChange, onClear } : FiltersSideBarPro
                         onChange={e => onFilterChange("category", e.target.value)}
                     >
                         <option value="">Todas las categorías</option>
-                        {categories.filter(cat => cat != "").map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        {categories.filter(cat => cat != null && cat != undefined && cat.trim() !== "").map(cat => <option key={cat} value={cat}>{cat}</option>)}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18}/>
                 </div>

@@ -3,7 +3,6 @@ import {Search, ChevronDown} from 'lucide-react'
 import {Pedido} from "../../store/store.ts"
 import PedidoCard, {PedidoCardDetail} from "./PedidosCard.tsx";
 import {Package} from "lucide-react"
-import {getAccessToken} from "../../store/auth.ts";
 const apiUrl = import.meta.env.VITE_API_URL
 
 
@@ -35,9 +34,7 @@ function PedidosLanding() {
     useEffect(() => {
         //console.log(`${apiUrl}/rest/api/1/pedidos`)
         fetch(`${apiUrl}/rest/api/1/pedidos`, {
-            headers: {
-                Authorization: `Bearer ${getAccessToken()}`,
-            }
+            credentials: "include"
         })
             .then(res => res.json())
             .then(res => setPedidos(res.content)).catch(err => console.log(err));

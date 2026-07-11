@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@mui/joy";
 import { useDispatch } from "react-redux";
 import { removeFromCart, updateQuantity } from "../store/cartSlice";
-import { getAccessToken } from "../store/auth";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -34,9 +33,7 @@ const CartItemCard = ({ id, quantity, sku }: CartItemCardProps) => {
 
   useEffect(() => {
     fetch(`${apiUrl}/rest/api/1/urrea/producto?codigo=${sku}`, {
-      headers: {
-        Authorization: `Bearer ${getAccessToken()}`,
-      },
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data: ProductoResponse) => {

@@ -19,7 +19,6 @@ import java.util.*;
 
 
 @Slf4j
-@CrossOrigin(origins = "*")
 @RequestMapping(path = "/rest/api/1/producto")
 @RestController
 public class ProductController {

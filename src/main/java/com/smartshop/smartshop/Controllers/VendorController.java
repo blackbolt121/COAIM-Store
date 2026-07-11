@@ -39,7 +39,7 @@ public class VendorController {
                         vendor.getVendorZipCode(),
                         vendor.getVendorPostalCode(),
                         vendor.getVendorWebsite(),
-                        vendor.getVendorWebsite(),
+                        vendor.getVendorWebsiteUrl(),
                         vendor.getVendorFaxUrl()
                 ))
                 .toList();

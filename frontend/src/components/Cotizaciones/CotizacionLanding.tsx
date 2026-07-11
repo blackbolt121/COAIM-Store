@@ -3,7 +3,6 @@ import QuoteCard from "./QuoteCard.tsx";
 import {useEffect, useState} from "react";
 import {Package} from "lucide-react";
 import axios from "axios";
-import {getAccessToken} from "../../store/auth.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 // -----------------------------------------------------------------------------
 // 2. DATOS DE EJEMPLO (MOCK DATA)
@@ -42,9 +41,7 @@ const CotizacionLanding = () => {
         async function loadQuotes () {
             try {
                 const cotizacionesRequest = await axios.get(`${apiUrl}/rest/api/1/quotes`, {
-                    headers: {
-                        "Authorization": `Bearer ${getAccessToken()}`
-                    }
+                    withCredentials: true
                 })
                 const cotizaciones: Quote[] = cotizacionesRequest.data;
                 setQuotes(cotizaciones)

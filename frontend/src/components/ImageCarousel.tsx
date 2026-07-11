@@ -4,7 +4,6 @@ import lock from "../assets/lock.jpg"
 import axios from "axios";
 import { Vendor } from "../store/store";
 import { useEffect, useState } from "react";
-import { getAccessToken } from "../store/auth";
 import { useNavigate } from "react-router-dom";
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -46,22 +45,22 @@ const ImageCarousel = () => {
     }
 
     const fetchVendors = async () => {
+        try {
+            const request = await axios.get<Vendor[]>(`${apiUrl}/rest/api/1/vendor/all`, {
+                withCredentials: true
+            })
 
-        const request = await axios.get<Vendor[]>(`${apiUrl}/rest/api/1/vendor/all`, {
-            headers: {
-                "Authorization": `Bearer ${getAccessToken()}`
-            }
-        })
+            const vendors = request.data
 
+            const vendorsArray = vendors
+                .map(buildVendorCard)
+                .filter((vend): vend is VendorCarousel => vend !== null)
 
-        const vendors = request.data
-
-
-        const vendorsArray = vendors
-            .map(buildVendorCard)
-            .filter((vend): vend is VendorCarousel => vend !== null)
-
-        setVendor(vendorsArray.sort((a, b)=> b.name.localeCompare(a.name)))
+            setVendor(vendorsArray.sort((a, b) => b.name.localeCompare(a.name)))
+        } catch (error) {
+            console.error("Error fetching vendors", error)
+            setVendor([])
+        }
     }
 
 

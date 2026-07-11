@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { Minus, Plus, ShoppingCart, CheckCircle, Truck, ShieldCheck, MessageCircle, ArrowLeft, ChevronRight } from 'lucide-react';
 
-import { getAccessToken } from '../../store/auth';
 import { addToCart } from '../../store/cartSlice';
 import { AppDispatch, Product } from '../../store/store';
 import { Comments } from '../Comments/Comments';
@@ -211,10 +210,7 @@ export const ProductPage = () => {
                 const response = await axios.get<Product>(
                     `${apiUrl}/rest/api/1/producto?id=${encodeURIComponent(id || "")}`,
                     {
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${getAccessToken()}`
-                        }
+                        withCredentials: true
                     }
                 );
                 setProduct(response.data);

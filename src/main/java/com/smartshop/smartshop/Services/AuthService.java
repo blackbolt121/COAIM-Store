@@ -108,18 +108,18 @@ public class AuthService {
         final String refreshToken = jwtService.generateRefreshToken(user);
         revokeAllUserTokens(user);
         saveUserToken(user, accessToken);
+        saveUserToken(user, refreshToken);
         return new TokenResponse(accessToken, refreshToken);
     }
 
 
-    public TokenResponse refreshToken(@NotNull final String authentication) {
+    public TokenResponse refreshToken(@NotNull final String refreshToken) {
 
-        if (authentication == null || !authentication.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid auth header");
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new IllegalArgumentException("Invalid refresh token");
         }
-        final String refreshToken = authentication.substring(7);
         final String userEmail = jwtService.extractUsername(refreshToken);
-        if (userEmail == null) {
+        if (userEmail == null || userEmail.isBlank()) {
             return null;
         }
 
@@ -129,8 +129,7 @@ public class AuthService {
             return null;
         }
 
-        final String accessToken = jwtService.generateRefreshToken(user);
-        revokeAllUserTokens(user);
+        final String accessToken = jwtService.generateToken(user);
         saveUserToken(user, accessToken);
 
         return new TokenResponse(accessToken, refreshToken);
@@ -139,7 +138,7 @@ public class AuthService {
     public Boolean validateToken(@NotNull final String token) {
         final String username = jwtService.extractUsername(token);
         log.info("Validating token for " + username);
-        if (username == null) {
+        if (username == null || username.isBlank()) {
             return false;
         }
         try{

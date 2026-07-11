@@ -68,7 +68,7 @@ public class JwtService {
     }
 
     public String generateRefreshToken(final Usuario user) {
-        return buildToken(user, expiration);
+        return buildToken(user, refresh);
     }
 
     private String buildToken(final Usuario usuario, final long expiration){
