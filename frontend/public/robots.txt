@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://siscadindustrial.cloud/sitemap.xml

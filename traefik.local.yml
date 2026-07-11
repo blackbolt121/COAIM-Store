@@ -1,0 +1,36 @@
+http:
+  routers:
+    localhost:
+      rule: Host(`localhost`) || Host(`127.0.0.1`)
+      entryPoints:
+        - web
+      service: siscad
+
+    siscad:
+      rule: Host(`siscadindustrial.cloud`)
+      entryPoints:
+        - websecure
+      tls: {}
+      service: siscad
+
+    siscad-www:
+      rule: Host(`www.siscadindustrial.cloud`)
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - redirect-www-to-root
+      service: noop@internal
+
+  middlewares:
+    redirect-www-to-root:
+      redirectRegex:
+        regex: ^https?://www\.siscadindustrial\.cloud/?(.*)
+        replacement: https://siscadindustrial.cloud/$1
+        permanent: true
+
+  services:
+    siscad:
+      loadBalancer:
+        servers:
+          - url: http://app:8080

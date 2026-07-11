@@ -196,7 +196,13 @@ const ProductSkeleton = () => (
 export const ProductPage = () => {
     const { id } = useParams();
     const location = useLocation();
-    const fromUrl = (location.state as any)?.from || "/tienda";
+    const fromUrl =
+        typeof location.state === "object" &&
+        location.state !== null &&
+        "from" in location.state &&
+        typeof (location.state as { from?: unknown }).from === "string"
+            ? (location.state as { from: string }).from
+            : "/tienda";
     const [product, setProduct] = useState<Product | null>(null);
     const [quantity, setQuantity] = useState(1);
     const [isLoading, setIsLoading] = useState(true);

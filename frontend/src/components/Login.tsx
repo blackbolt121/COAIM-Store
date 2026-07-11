@@ -35,7 +35,7 @@ const Login = () => {
         navigate("/");
       }
     });
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

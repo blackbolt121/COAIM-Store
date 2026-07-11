@@ -213,7 +213,7 @@ const Signup = () => {
         navigate("/");
       }
     });
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,10 +268,11 @@ const Signup = () => {
         return;
       }
       navigate("/");
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ||
-        "Error al registrar. Verifica los campos o intenta con otro correo.";
+    } catch (err: unknown) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message ||
+          "Error al registrar. Verifica los campos o intenta con otro correo."
+        : "Error al registrar. Verifica los campos o intenta con otro correo.";
       setError(message);
       setIsLoading(false);
     }

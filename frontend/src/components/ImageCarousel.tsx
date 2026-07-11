@@ -3,7 +3,7 @@ import surtex from "../assets/surtex.jpg"
 import lock from "../assets/lock.jpg"
 import axios from "axios";
 import { Vendor } from "../store/store";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -17,6 +17,24 @@ interface VendorCarousel {
     image?: string
 }
 
+const normalizeVendorName = (value: string) =>
+    value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+const buildVendorCard = (vend: Vendor): VendorCarousel | null => {
+    const normalizedName = normalizeVendorName(vend.vendorName)
+
+    switch (normalizedName) {
+        case "urrea":
+            return { name: vend.vendorName, id: vend.vendorId, image: urrea }
+        case "surtek":
+            return { name: vend.vendorName, id: vend.vendorId, image: surtex }
+        case "lock":
+            return { name: vend.vendorName, id: vend.vendorId, image: lock }
+        default:
+            return { name: vend.vendorName, id: vend.vendorId }
+    }
+}
+
 
 const ImageCarousel = () => {
 
@@ -26,25 +44,7 @@ const ImageCarousel = () => {
 
     const [vendor, setVendor] = useState<VendorCarousel[]>([])
 
-    const normalizeVendorName = (value: string) =>
-        value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-
-    const buildVendorCard = (vend: Vendor): VendorCarousel | null => {
-        const normalizedName = normalizeVendorName(vend.vendorName)
-
-        switch (normalizedName) {
-            case "urrea":
-                return { name: vend.vendorName, id: vend.vendorId, image: urrea }
-            case "surtek":
-                return { name: vend.vendorName, id: vend.vendorId, image: surtex }
-            case "lock":
-                return { name: vend.vendorName, id: vend.vendorId, image: lock }
-            default:
-                return { name: vend.vendorName, id: vend.vendorId }
-        }
-    }
-
-    const fetchVendors = async () => {
+    const fetchVendors = useCallback(async () => {
         try {
             const request = await axios.get<Vendor[]>(`${apiUrl}/rest/api/1/vendor/all`, {
                 withCredentials: true
@@ -61,16 +61,12 @@ const ImageCarousel = () => {
             console.error("Error fetching vendors", error)
             setVendor([])
         }
-    }
-
-
-    useEffect(()=>{
-        fetchVendors().catch()
     }, [])
 
-    useEffect(()=>{
 
-    }, [vendor])
+    useEffect(()=>{
+        void fetchVendors()
+    }, [fetchVendors])
 
     return (
         <section className="py-16 rounded-lg mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 my-8">

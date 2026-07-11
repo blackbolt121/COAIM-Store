@@ -1,0 +1,114 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --api.insecure=true
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.local.yml:/etc/traefik/dynamic/traefik.local.yml:ro
+    networks:
+      - proxy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-coaim}?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-coaim_app}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-coaim_app_local}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      APP_FRONTEND_ORIGIN: http://localhost:8080
+      APP_AUTH_COOKIE_SECURE: "false"
+      SMARTSHOP_LOADDATA: "true"
+      SMARTSHOP_LOADROLES: "true"
+      SMARTSHOP_ADMIN_PASSWORD: ${SMARTSHOP_ADMIN_PASSWORD:-change-me-admin}
+      SMARTSHOP_PAYMENT_PRIVATE_TOKEN: ${SMARTSHOP_PAYMENT_PRIVATE_TOKEN:-change-me-private-token}
+      SMARTSHOP_PAYMENT_PUBLIC_TOKEN: ${SMARTSHOP_PAYMENT_PUBLIC_TOKEN:-change-me-public-token}
+      SMARTSHOP_PAYMENT_URL: ${SMARTSHOP_PAYMENT_URL:-https://gateway-154.netpaydev.com/gateway-ecommerce/v3/token/amount}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST:-mutual-bobcat-45430.upstash.io}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT:-6379}
+      SPRING_DATA_REDIS_USERNAME: ${SPRING_DATA_REDIS_USERNAME:-default}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:-change-me-redis}
+      SPRING_DATA_REDIS_SSL_ENABLED: ${SPRING_DATA_REDIS_SSL_ENABLED:-true}
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_API_KEY: ${MEILI_MASTER_KEY:-change-me-meili-key}
+      MEILI_INDEX_PRODUCTS: ${MEILI_INDEX_PRODUCTS:-products}
+      MEILI_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    networks:
+      - proxy
+      - internal
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-coaim}
+      MYSQL_USER: ${MYSQL_USER:-coaim_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-coaim_app_local}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+    volumes:
+      - mysql-data-local:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -uroot -p${MYSQL_ROOT_PASSWORD:-rootpassword}
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - internal
+    restart: unless-stopped
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.13
+    environment:
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-change-me-meili-key}
+    volumes:
+      - meili-data-local:/meili_data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:7700/health >/dev/null 2>&1
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - internal
+    restart: unless-stopped
+
+networks:
+  proxy:
+    name: siscad-local-proxy
+  internal:
+    name: siscad-local-internal
+
+volumes:
+  mysql-data-local:
+    name: siscad-local-mysql-data
+  meili-data-local:
+    name: siscad-local-meili-data

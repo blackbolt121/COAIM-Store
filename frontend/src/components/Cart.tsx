@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
 import { clearCart } from "../store/cartSlice";
@@ -83,7 +83,7 @@ const Cart = () => {
         });
       }
 
-      window.location.href = `http://mercadourrea.com.mx/checkout?cart=${cartId}`;
+      window.location.href = `${window.location.origin}/checkout?cart=${cartId}`;
     } catch (error) {
       console.error("Error al enviar el carrito:", error);
       alert("No se pudo procesar el carrito");
@@ -105,7 +105,7 @@ const Cart = () => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 
-  async function validateCart() {
+  const validateCart = useCallback(async () => {
     const cartId = localStorage.getItem("cartId");
     let flag = false;
 
@@ -126,11 +126,11 @@ const Cart = () => {
         localStorage.removeItem("cartId");
       }
     }
-  }
+  }, [dispatch]);
 
   useEffect(() => {
-    validateCart().then();
-  }, []);
+    void validateCart();
+  }, [validateCart]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),rgba(248,250,252,1)_40%,rgba(226,232,240,1)_100%)]">

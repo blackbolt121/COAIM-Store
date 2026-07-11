@@ -125,7 +125,7 @@ const Footer = () => {
                         <Link to="/" className="inline-block rounded-2xl bg-white p-4 shadow-sm">
                             <img
                                 src={logo}
-                                alt="SISCAD Industrial Supply"
+                                alt="Siscad Industrial"
                                 className="h-10 w-auto"
                             />
                         </Link>
@@ -205,12 +205,12 @@ const Footer = () => {
 
                         <div className="h-px bg-slate-800" />
 
-                        <LocationBlock
+                        {/* <LocationBlock
                             title="Querétaro (Santa Rosa Jáuregui)"
                             address="Prolongación Independencia #84, Santa Rosa Jáuregui"
                             email="ventascoaimsa@gmail.com"
                             whatsapp="https://api.whatsapp.com/send/?phone=4461390550&text&type=phone_number&app_absent=0"
-                        />
+                        /> */}
                     </div>
                 </div>
             </div>
@@ -277,7 +277,7 @@ const Footer = () => {
                         &copy; {currentYear} SISCAD Industrial C.A. C.V.. Todos los derechos reservados.
                     </p>
                     <p className="text-xs text-slate-600 tracking-wide">
-                        SISCAD Industrial Supply
+                        Siscad Industrial
                     </p>
                 </div>
             </div>

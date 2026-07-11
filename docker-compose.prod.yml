@@ -1,0 +1,97 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-coaim}?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-coaim_app}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      APP_FRONTEND_ORIGIN: https://siscadindustrial.cloud
+      APP_AUTH_COOKIE_SECURE: "true"
+      SMARTSHOP_LOADDATA: "false"
+      SMARTSHOP_LOADROLES: "true"
+      SMARTSHOP_ADMIN_PASSWORD: ${SMARTSHOP_ADMIN_PASSWORD:?set SMARTSHOP_ADMIN_PASSWORD}
+      SMARTSHOP_PAYMENT_PRIVATE_TOKEN: ${SMARTSHOP_PAYMENT_PRIVATE_TOKEN:?set SMARTSHOP_PAYMENT_PRIVATE_TOKEN}
+      SMARTSHOP_PAYMENT_PUBLIC_TOKEN: ${SMARTSHOP_PAYMENT_PUBLIC_TOKEN:?set SMARTSHOP_PAYMENT_PUBLIC_TOKEN}
+      SMARTSHOP_PAYMENT_URL: ${SMARTSHOP_PAYMENT_URL:-https://gateway-154.netpaydev.com/gateway-ecommerce/v3/token/amount}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST:-mutual-bobcat-45430.upstash.io}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT:-6379}
+      SPRING_DATA_REDIS_USERNAME: ${SPRING_DATA_REDIS_USERNAME:-default}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD:?set SPRING_DATA_REDIS_PASSWORD}
+      SPRING_DATA_REDIS_SSL_ENABLED: ${SPRING_DATA_REDIS_SSL_ENABLED:-true}
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_API_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY}
+      MEILI_INDEX_PRODUCTS: ${MEILI_INDEX_PRODUCTS:-products}
+      MEILI_ENABLED: "true"
+    networks:
+      - internal
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  mysql:
+    image: mysql:8.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-coaim}
+      MYSQL_USER: ${MYSQL_USER:-coaim_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -uroot -p${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - internal
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.13
+    environment:
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY}
+    volumes:
+      - meili-data:/meili_data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:7700/health >/dev/null 2>&1
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - internal
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  internal:
+    name: siscad-internal
+    internal: true
+
+volumes:
+  mysql-data:
+    name: siscad-mysql-data
+  meili-data:
+    name: siscad-meili-data

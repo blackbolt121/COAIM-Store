@@ -1,5 +1,5 @@
 import { Button, Typography } from '@mui/joy';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { Product } from '../store/store';
 import { useState } from 'react';
@@ -19,7 +19,7 @@ const LandingPage = () => {
 
     const navigate = useNavigate()
 
-    async function loadCategories() {
+    const loadCategories = useCallback(async () => {
         try {
             const response = await axios.get<string[]>(
                 `${apiUrl}/rest/api/1/producto/categorias`,
@@ -28,16 +28,15 @@ const LandingPage = () => {
                 }
             );
 
-            console.log(categories);
             if (response.status === 200) {
                 setCategories(response.data);
             }
         } catch (error) {
             console.log("Error fetching categories", error);
         }
-    }
+    }, []);
 
-    async function loadProducts() {
+    const loadProducts = useCallback(async () => {
 
 
         //console.log(`Bearer ${getAccessToken()}`)
@@ -69,11 +68,11 @@ const LandingPage = () => {
         // Fetch products from API
 
 
-    }
+    }, []);
 
     useEffect(() => {
-        Promise.all([loadProducts(), loadCategories()])
-    }, [])
+        void Promise.all([loadProducts(), loadCategories()])
+    }, [loadProducts, loadCategories])
 
     return (
         <div className="min-h-screen flex flex-col bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),rgba(248,250,252,1)_40%,rgba(226,232,240,1)_100%)] text-slate-900">
@@ -86,7 +85,7 @@ const LandingPage = () => {
                 <div className="relative mx-auto grid max-w-screen-2xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-24">
                     <div className="flex flex-col justify-center text-left">
                         <div className="animate-fade-up inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-200 backdrop-blur">
-                            SISCAD Industrial Supply
+                            Siscad Industrial
                         </div>
                         <Typography level="h1" sx={{ color: 'white' }} className="animate-fade-up mt-6 max-w-2xl text-4xl font-black leading-tight sm:text-5xl lg:text-6xl" style={{ animationDelay: '80ms' }}>
                             Encuentra miles de productos industriales al mejor precio.

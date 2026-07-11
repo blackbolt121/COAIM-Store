@@ -15,7 +15,7 @@ const TerminosPage = () => {
             title: "TÉRMINOS Y CONDICIONES DE USO DE SISCAD INDUSTRIAL C.A. C.V.",
             content: `**Fecha de última actualización:** 26 de julio de 2025.
 
-Al ingresar y utilizar el sitio web www.mercadourrea.com, propiedad de SISCAD Industrial C.A. C.V., el Usuario acepta en forma expresa y plena estos Términos y Condiciones, así como las políticas y avisos contenidos en el sitio. El uso del sitio implica la aceptación de las presentes condiciones, en conformidad con las leyes vigentes aplicables.
+Al ingresar y utilizar el sitio web siscadindustrial.cloud, propiedad de SISCAD Industrial C.A. C.V., el Usuario acepta en forma expresa y plena estos Términos y Condiciones, así como las políticas y avisos contenidos en el sitio. El uso del sitio implica la aceptación de las presentes condiciones, en conformidad con las leyes vigentes aplicables.
 
 El Usuario reconoce que estos Términos y Condiciones constituyen un acuerdo vinculante entre él y SISCAD Industrial C.A. C.V., y que cualquier modificación futura será publicada en este mismo apartado.`,
         },

@@ -22,7 +22,7 @@ export interface FiltersInterface {
 }
 
 const TrustBadge = ({ icon: Icon, label, sub }: { icon: ElementType; label: string; sub: string }) => (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 backdrop-blur-sm">
+    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-sm">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/20">
             <Icon className="h-4 w-4" />
         </div>
@@ -46,6 +46,7 @@ export const Tienda = () => {
 
     const [products, setProducts] = useState<Product[]>([]);
     const [total, setTotal] = useState<number>(0);
+    const [availableProductsCount, setAvailableProductsCount] = useState<number | null>(null);
     const [numPages, setNumPages] = useState<number>(1);
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -56,6 +57,28 @@ export const Tienda = () => {
     const initialQuery = searchParams.get("q") || "";
     const isSearchMode = initialQuery.trim().length > 0;
     const filters = useMemo(() => getFiltersFromParams(searchParams), [searchParams]);
+
+    useEffect(() => {
+        async function loadAvailableProductsCount() {
+            try {
+                const response = await axios.get<ApiResponse>(
+                    `${apiUrl}/rest/api/1/producto/all?page=0&size=1`,
+                    {
+                        withCredentials: true,
+                    }
+                );
+
+                if (response.status === 200) {
+                    setAvailableProductsCount(response.data.totalElements || 0);
+                }
+            } catch (error) {
+                console.log("Error fetching available products count", error);
+                setAvailableProductsCount(0);
+            }
+        }
+
+        loadAvailableProductsCount();
+    }, []);
 
     useEffect(() => {
         async function loadProducts() {
@@ -168,6 +191,25 @@ export const Tienda = () => {
         setSearchParams(newParams, { replace: true });
     };
 
+    const handlePriceFilterApply = (minPrice: string, maxPrice: string) => {
+        const newParams = new URLSearchParams(searchParams);
+
+        if (minPrice) {
+            newParams.set("minPrice", minPrice);
+        } else {
+            newParams.delete("minPrice");
+        }
+
+        if (maxPrice) {
+            newParams.set("maxPrice", maxPrice);
+        } else {
+            newParams.delete("maxPrice");
+        }
+
+        newParams.set("page", "1");
+        setSearchParams(newParams, { replace: true });
+    };
+
     const handleClearFilters = () => {
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("category");
@@ -187,8 +229,8 @@ export const Tienda = () => {
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),rgba(248,250,252,1)_40%,rgba(226,232,240,1)_100%)]">
-            <div className="relative overflow-hidden border-b border-red-900/20 bg-gradient-to-br from-red-950 via-red-900 to-red-800 text-white">
-                <div className="absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [background-size:48px_48px]" />
+            <div className="relative overflow-hidden border-b border-red-900/20 bg-linear-to-br from-red-950 via-red-900 to-red-800 text-white">
+                <div className="absolute inset-0 opacity-[0.12] [bg-image:linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.14)_1px,transparent_1px)] [bg-size:48px_48px]" />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.10),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_24%)]" />
                 <div className="relative mx-auto max-w-screen-2xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -204,7 +246,11 @@ export const Tienda = () => {
                             </p>
                         </div>
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
-                            <TrustBadge icon={Package} label="+10,000" sub="productos" />
+                            <TrustBadge
+                                icon={Package}
+                                label={availableProductsCount === null ? "..." : availableProductsCount.toLocaleString("es-MX")}
+                                sub="productos disponibles"
+                            />
                             <TrustBadge icon={Truck} label="Envíos" sub="a todo México" />
                             <TrustBadge icon={ShieldCheck} label="Atención" sub="B2B / B2C" />
                             <TrustBadge icon={Clock} label="Stock" sub="disponible" />
@@ -253,7 +299,12 @@ export const Tienda = () => {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-6">
-                    <FiltersSidebar filters={filters} onFilterChange={handleFilterChange} onClear={handleClearFilters} />
+                    <FiltersSidebar
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onPriceFilterApply={handlePriceFilterApply}
+                        onClear={handleClearFilters}
+                    />
 
                     <div className="flex-1 min-w-0">
                         {isLoading ? (

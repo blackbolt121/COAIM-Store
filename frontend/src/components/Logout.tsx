@@ -9,13 +9,13 @@ const Logout = () => {
     const navigate = useNavigate()
 
     useEffect(()=> {
-        axios.post(`${apiUrl}/auth/logout`, null, { withCredentials: true })
+        void axios.post(`${apiUrl}/auth/logout`, null, { withCredentials: true })
           .catch(() => undefined)
           .finally(() => {
             localStorage.removeItem("user")
             navigate("/login")
           })
-    }, [])
+    }, [navigate])
 
     return <>
         <div>

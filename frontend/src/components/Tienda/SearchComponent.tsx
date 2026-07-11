@@ -3,7 +3,7 @@ import {ApiResponse} from "../../types/APIResponse.ts";
 import {Product} from "../../store/store.ts";
 import axios from "axios";
 import {Link, useNavigate, useLocation} from "react-router-dom";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, CornerDownLeft } from "lucide-react";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -102,13 +102,20 @@ const SearchComponent: React.FC = () => {
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => setShowResults(true)}
                     placeholder="Buscar herramientas, marcas o número de parte..."
-                    className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200"
+                    className="w-full pl-11 pr-36 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200"
                 />
                 {isLoading && (
-                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+                    <div className="absolute inset-y-0 right-32 pr-3 flex items-center">
                         <Loader2 className="h-5 w-5 text-primary animate-spin" />
                     </div>
                 )}
+                <button
+                    type="submit"
+                    className="absolute inset-y-0 right-0 m-1.5 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+                >
+                    <span>Ver más</span>
+                    <CornerDownLeft className="h-4 w-4" />
+                </button>
             </form>
 
             {showResults && query.length >= 3 && (
@@ -143,16 +150,19 @@ const SearchComponent: React.FC = () => {
                             <li className="p-6 text-center text-slate-500">
                                 <Search className="h-6 w-6 mx-auto mb-2 text-slate-300" />
                                 <p className="text-sm">No se encontraron resultados.</p>
-                                <button
-                                    type="button"
-                                    onClick={goToSearchResults}
-                                    className="mt-3 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
-                                >
-                                    Ver resultados en tienda
-                                </button>
                             </li>
                         )}
                     </ul>
+                    <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-3">
+                        <button
+                            type="button"
+                            onClick={goToSearchResults}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                        >
+                            <span>Ver más resultados</span>
+                            <CornerDownLeft className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>
