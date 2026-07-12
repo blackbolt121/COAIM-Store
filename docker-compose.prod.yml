@@ -42,6 +42,8 @@ services:
       - "traefik.http.routers.siscad-app.rule=Host(`siscadindustrial.cloud`) || Host(`www.siscadindustrial.cloud`)"
       - "traefik.http.routers.siscad-app.entrypoints=websecure"
       - "traefik.http.services.siscad-app.loadbalancer.server.port=8080"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.siscad-app.tls=true"
 
   mysql:
     image: mysql:8.4
