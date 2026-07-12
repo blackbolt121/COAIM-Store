@@ -22,11 +22,11 @@ interface PaymentCardInterface {
 }
 const PaymentCard = ({ icon, name } : PaymentCardInterface) => {
     return (
-        <div className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out">
+        <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-center h-16 w-full">
                 {icon}
             </div>
-            <p className="mt-4 text-sm font-medium text-gray-600">{name}</p>
+            <p className="mt-4 text-sm font-semibold tracking-wide text-slate-600">{name}</p>
         </div>
     );
 };
@@ -61,18 +61,18 @@ export default function PaymentMethodsSection() {
     ];
 
     return (
-        <div className="bg-white py-10 flex items-center justify-center font-sans">
-            <div className="w-full max-w-4xl mx-auto p-8">
+        <div className="bg-slate-50 py-16 flex items-center justify-center font-sans">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
-                    <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight mb-5">
+                    <h2 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl tracking-tight mb-5">
                         Métodos de Pago Aceptados
                     </h2>
-                    <div className="w-50 h-1 bg-blue-600 mx-auto mb-5"></div>
-                    <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">Trabajamos con las plataformas de pago más seguras del mundo.</p>
+                    <div className="w-24 h-1 bg-primary mx-auto mb-5 rounded-full"></div>
+                    <p className="mt-4 text-base sm:text-lg text-slate-600 max-w-3xl mx-auto">Trabajamos con las plataformas de pago más seguras del mundo.</p>
                 </div>
 
                 {/* Grid container for payment cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {paymentMethods.map((method) => (
                         <PaymentCard key={method.name} icon={method.icon} name={method.name} />
                     ))}

@@ -5,7 +5,7 @@ export default function NotFoundPage() {
     return (
         <div className="bg-gray-50 min-h-screen flex flex-col">
             {/* Contenido Principal */}
-            <main className="flex-grow flex items-center justify-center">
+            <main className="grow flex items-center justify-center">
                 <div className="text-center p-8">
                     <span className="text-7xl" role="img" aria-label="mapa perdido">🗺️</span>
                     <h1 className="mt-4 text-6xl font-bold text-red-600">404</h1>

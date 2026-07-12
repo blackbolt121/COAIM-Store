@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +36,9 @@ import java.util.Optional;
 @Log4j2
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String CSRF_HEADER = "X-CSRF-Token";
+    private static final String CSRF_COOKIE = "csrf_token";
+
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
@@ -53,8 +57,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
+    private String extractCookieValue(HttpServletRequest request, String cookieName) {
+        if (request.getCookies() == null) {
+            return null;
+        }
+        for (Cookie cookie : request.getCookies()) {
+            if (cookieName.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+    private boolean requiresCsrfProtection(HttpServletRequest request) {
+        final String method = request.getMethod().toUpperCase();
+        if (!List.of("POST", "PUT", "PATCH", "DELETE").contains(method)) {
+            return false;
+        }
+
+        final String path = request.getServletPath();
+        return !(path.equals("/auth/login") || path.equals("/auth/register") || path.equals("/auth/validate") || path.equals("/auth/myself"));
+    }
+
+    private boolean validateCsrfToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (!requiresCsrfProtection(request)) {
+            return true;
+        }
+
+        final String headerToken = request.getHeader(CSRF_HEADER);
+        final String cookieToken = extractCookieValue(request, CSRF_COOKIE);
+
+        if (headerToken == null || cookieToken == null || !headerToken.equals(cookieToken)) {
+            response.sendError(HttpStatus.FORBIDDEN.value(), "CSRF token validation failed");
+            return false;
+        }
+
+        return true;
+    }
+
     private void resetCookie(@NonNull HttpServletResponse response,@NonNull HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return;
+        }
         for (Cookie cookie : cookies) {
             Cookie deleteCookie = new Cookie(cookie.getName(), "");
             deleteCookie.setMaxAge(0); // Expira inmediatamente
@@ -102,9 +147,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
 
-        if (request.getServletPath().contains("/auth/")) {
-            logger.info("JWT Authentication Filter for authentication");
+        if (request.getServletPath().equals("/auth/login") || request.getServletPath().equals("/auth/register")) {
+            logger.info("Skipping csrf for public auth endpoints");
             filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (!validateCsrfToken(request, response)) {
             return;
         }
 

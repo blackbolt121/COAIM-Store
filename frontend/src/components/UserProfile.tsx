@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../store/store.ts";
-import { loadUsuarioFromLocalStorage } from "../store/UserSlice.ts";
 import { FC } from "react";
 
 
 const UserProfile: FC = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
     const user = useSelector((state: RootState) => state.user.usuario);
     const [isOpen, setIsOpen] = useState<boolean>(false);
     // Tipamos la referencia para que TypeScript sepa que es un elemento div
@@ -22,9 +20,6 @@ const UserProfile: FC = () => {
         return initials.substring(0, 2).toUpperCase();
     };
 
-    useEffect(() => {
-        dispatch(loadUsuarioFromLocalStorage());
-    }, [dispatch]);
     // Tipamos el evento del listener
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

@@ -2,15 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {ApiResponse} from "../../types/APIResponse.ts";
 import {Product} from "../../store/store.ts";
 import axios from "axios";
-import {getAccessToken} from "../../store/auth.ts";
-import {Link} from "react-router-dom";
+import {Link, useNavigate, useLocation} from "react-router-dom";
+import { Search, Loader2, CornerDownLeft } from "lucide-react";
+
 const apiUrl = import.meta.env.VITE_API_URL;
-
-
-// Icono de Lupa (puedes usar una librería como react-icons o un SVG)
-const SearchIcon = () => (
-    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-);
 
 const SearchComponent: React.FC = () => {
     const [query, setQuery] = useState<string>('');
@@ -19,19 +14,18 @@ const SearchComponent: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [showResults, setShowResults] = useState<boolean>(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    // Efecto para debounce: actualiza debouncedQuery 500ms después de que query cambia
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedQuery(query);
         }, 500);
-        // Limpia el timeout si el componente se desmonta o query cambia
         return () => {
             clearTimeout(handler);
         };
     }, [query]);
 
-    // Hook para cerrar el dropdown si se hace clic afuera
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -44,7 +38,6 @@ const SearchComponent: React.FC = () => {
         };
     }, []);
 
-    // useCallback para memorizar la función de fetch
     const fetchResults = useCallback(async (searchQuery: string) => {
         if (searchQuery.length < 3) {
             setResults([]);
@@ -55,87 +48,121 @@ const SearchComponent: React.FC = () => {
         setShowResults(true);
 
         try {
-            // Reemplaza esta URL con la tuya
-            const url = `${apiUrl}/rest/api/1/producto/search?query=${encodeURIComponent(searchQuery)}`;
-            //console.log(url);
+            const url = `${apiUrl}/rest/api/1/producto/search?q=${encodeURIComponent(searchQuery)}&page=0&size=6`;
             const response = await axios(url, {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${getAccessToken()}`
-                }
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+              withCredentials: true
             });
 
             if (response.status >= 401) throw new Error("Network response was not ok");
-
+            console.log(response.data);
             const data: ApiResponse = response.data;
             setResults(data.content);
         } catch (error) {
             console.error("Failed to fetch search results:", error);
-            setResults([]); // Limpiar resultados en caso de error
+            setResults([]);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
-    // Efecto para llamar a la API cuando debouncedQuery cambia
     useEffect(() => {
         fetchResults(debouncedQuery);
     }, [debouncedQuery, fetchResults]);
 
+    const goToSearchResults = () => {
+        const normalized = query.trim();
+        if (!normalized) {
+            return;
+        }
+        const params = new URLSearchParams(location.search);
+        params.set("q", normalized);
+        params.set("page", "1");
+        navigate(`/tienda?${params.toString()}`);
+        setShowResults(false);
+    };
+
+    const handleSubmit = (event: React.FormEvent) => {
+        event.preventDefault();
+        goToSearchResults();
+    };
+
     return (
-        <div className="w-full max-w-2xl mx-auto" ref={searchRef}>
-            <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <SearchIcon />
+        <div className="w-full max-w-2xl mx-auto relative" ref={searchRef}>
+            <form className="relative" onSubmit={handleSubmit}>
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => setShowResults(true)}
-                    placeholder="Busca un producto..."
-                    className="w-full sm:w-full md:w-full lg:w-[600px] pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="Buscar herramientas, marcas o número de parte..."
+                    className="w-full pl-11 pr-36 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200"
                 />
                 {isLoading && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <div className="w-5 h-5 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+                    <div className="absolute inset-y-0 right-32 pr-3 flex items-center">
+                        <Loader2 className="h-5 w-5 text-primary animate-spin" />
                     </div>
                 )}
-            </div>
+                <button
+                    type="submit"
+                    className="absolute inset-y-0 right-0 m-1.5 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/10"
+                >
+                    <span>Ver más</span>
+                    <CornerDownLeft className="h-4 w-4" />
+                </button>
+            </form>
 
             {showResults && query.length >= 3 && (
-                <div className="absolute z-10 left-1/3 w-full max-w-2xl mt-1 bg-white border border-gray-200 rounded-lg shadow-xl">
+                <div className="absolute z-50 left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl shadow-slate-900/10 overflow-hidden">
                     <ul className="max-h-96 overflow-y-auto">
                         {!isLoading && results.length > 0 && results.map((product) => (
                             <li key={product.id}>
-                                <Link to={`/producto/${product.id}`} className="flex items-center p-3 hover:bg-gray-100 transition-colors duration-150">
-                                    <img src={product.imageUrl} alt={product.name} className="w-12 h-12 object-cover rounded-md mr-4" />
-                                    <div className="flex-grow">
-                                        <p className="font-semibold text-gray-800">{product.name}</p>
-                                        <p className="text-sm text-gray-500">{product.category}</p>
-                                        <p className="font-semibold text-gray-800">{product.id}</p>
+                                <Link
+                                    to={`/producto/${product.id}`}
+                                    state={{ from: location.pathname + location.search }}
+                                    onClick={() => setShowResults(false)}
+                                    className="flex items-center gap-4 p-3 hover:bg-slate-50 transition-colors duration-150 border-b border-slate-100 last:border-b-0"
+                                >
+                                    <img
+                                        src={product.imageUrl}
+                                        alt={product.name}
+                                        className="w-12 h-12 object-contain rounded-lg bg-slate-50 border border-slate-100 flex-shrink-0"
+                                        loading="lazy"
+                                    />
+                                    <div className="flex-grow min-w-0">
+                                        <p className="font-semibold text-slate-800 text-sm truncate">{product.name}</p>
+                                        <p className="text-xs text-slate-500">{product.category}</p>
                                     </div>
-                                    <p className="text-lg font-bold text-blue-600">${product.price}</p>
+                                    <p className="text-sm font-bold text-primary whitespace-nowrap">
+                                        {product.price.toLocaleString("es-MX", { style: "currency", currency: "MXN" })}
+                                    </p>
                                 </Link>
                             </li>
                         ))}
 
                         {!isLoading && results.length === 0 && (
-                            <li className="p-4 text-center text-gray-500">No se encontraron resultados.</li>
+                            <li className="p-6 text-center text-slate-500">
+                                <Search className="h-6 w-6 mx-auto mb-2 text-slate-300" />
+                                <p className="text-sm">No se encontraron resultados.</p>
+                            </li>
                         )}
-
-                        {/*{!isLoading && results.length > 0 && (*/}
-                        {/*    <li>*/}
-                        {/*        <a*/}
-                        {/*            href={`/buscar?q=${encodeURIComponent(query)}`}*/}
-                        {/*            className="block w-full text-center p-4 bg-blue-500 text-white font-bold rounded-b-lg hover:bg-blue-600 transition-colors duration-150"*/}
-                        {/*        >*/}
-                        {/*            Ver todos los resultados*/}
-                        {/*        </a>*/}
-                        {/*    </li>*/}
-                        {/*)}*/}
                     </ul>
+                    <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-3">
+                        <button
+                            type="button"
+                            onClick={goToSearchResults}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-primary/10"
+                        >
+                            <span>Ver más resultados</span>
+                            <CornerDownLeft className="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

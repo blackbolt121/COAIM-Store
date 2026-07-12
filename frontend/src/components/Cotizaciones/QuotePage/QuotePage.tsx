@@ -2,7 +2,6 @@ import {AppDispatch, Product} from "../../../store/store.ts"
 import {useEffect, useMemo, useState} from "react";
 import {useParams} from "react-router-dom";
 import axios from "axios";
-import {getAccessToken} from "../../../store/auth.ts";
 import { useDispatch } from 'react-redux';
 import {addToCart} from "../../../store/cartSlice.ts";
 
@@ -91,9 +90,7 @@ const QuotePage = () => {
         async function loadQuote(){
             try{
                 const quoteRequest = await axios.get(`${apiUrl}/rest/api/1/quotes/${id}`, {
-                    headers: {
-                        Authorization: `Bearer ${getAccessToken()}`
-                    }
+                    withCredentials: true
                 })
                 const quoteData : Quote = quoteRequest.data
                 setQuote(quoteData)

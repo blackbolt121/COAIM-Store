@@ -82,7 +82,7 @@ public class AdminController {
     }
 
     @GetMapping("login")
-    public String login(@RequestParam(required = false, defaultValue = "false") boolean error, Model model, @CookieValue(value = "access_token", required = false) String token, HttpServletRequest request, HttpServletResponse response) {
+    public String login(@RequestParam(value = "error", required = false, defaultValue = "false") boolean error, Model model, @CookieValue(value = "access_token", required = false) String token, HttpServletRequest request, HttpServletResponse response) {
 
         if(token == null){
             log.info("Redirecting to login...");
@@ -117,7 +117,7 @@ public class AdminController {
     }
 
     @PostMapping("login")
-    public String login(@RequestParam String email, @RequestParam String password, HttpServletResponse response) {
+    public String login(@RequestParam("email") String email, @RequestParam("password") String password, HttpServletResponse response) {
         try{
 
             AuthRequest authRequest = new AuthRequest(email, password);
@@ -310,14 +310,14 @@ public class AdminController {
 //    }
 
     @GetMapping("/usuario/{id}")
-    public String usuario(@PathVariable String id, Model model) {
+    public String usuario(@PathVariable("id") String id, Model model) {
         Usuario usuario = userService.getUsuario(id).orElse(null);
         model.addAttribute("usuario", usuario);
         return "usuario";
     }
 
     @GetMapping("/usuario/edit/{id}")
-    public String usuarioEdit(@PathVariable String id, Model model) {
+    public String usuarioEdit(@PathVariable("id") String id, Model model) {
         Usuario usuario = userService.getUsuario(id).orElse(null);
 
         List<Role> roles = roleRepository.findAll();
@@ -337,7 +337,7 @@ public class AdminController {
     }
 
     @PostMapping("/quotes")
-    public String sendQuote(@RequestParam String correo, @RequestParam String nombre, @RequestParam String productoSeleccionados, Model model) {
+    public String sendQuote(@RequestParam("correo") String correo, @RequestParam("nombre") String nombre, @RequestParam("productoSeleccionados") String productoSeleccionados, Model model) {
 
         Resend resend = new Resend("re_fcfqJaWG_4VdJr8KzpWSwPX82y2gxw2ng");
 
@@ -388,14 +388,14 @@ public class AdminController {
 
     @GetMapping("/products")
     public String listProducts(Model model,
-                               @RequestParam(defaultValue = "0") int page,
-                               @RequestParam(defaultValue = "10") int size,
+                               @RequestParam(value = "page", defaultValue = "0") int page,
+                               @RequestParam(value = "size", defaultValue = "10") int size,
                                // Mapea todos los parámetros de filtro de tu @Query
-                               @RequestParam Optional<String> name,
-                               @RequestParam Optional<List<String>> categories,
-                               @RequestParam Optional<Double> minPrice,
-                               @RequestParam Optional<Double> maxPrice,
-                               @RequestParam Optional<String> brand) {
+                               @RequestParam(value = "name") Optional<String> name,
+                               @RequestParam(value = "categories") Optional<List<String>> categories,
+                               @RequestParam(value = "minPrice") Optional<Double> minPrice,
+                               @RequestParam(value = "maxPrice") Optional<Double> maxPrice,
+                               @RequestParam(value = "brand") Optional<String> brand) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Producto> productPage;
@@ -429,7 +429,7 @@ public class AdminController {
     }
 
     @GetMapping("/product/{id}")
-    public String showProduct(@PathVariable String id, Model model) {
+    public String showProduct(@PathVariable("id") String id, Model model) {
 
         log.info(id.toString());
         Optional<Producto> producto = productoService.getProduct(id);
@@ -520,4 +520,3 @@ public class AdminController {
         return html.toString();
     }
 }
-

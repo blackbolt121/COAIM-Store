@@ -34,7 +34,7 @@ public class PedidosController {
     }
 
     @GetMapping(path = "{id}")
-    public ResponseEntity<Pedidos> getPedidoById(@PathVariable long id) {
+    public ResponseEntity<Pedidos> getPedidoById(@PathVariable("id") long id) {
         Usuario usuario = userService.getUserByContext();
 
         Optional<Pedidos> pedidosOpt = pedidoRepository.findById(id);

@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@CrossOrigin(origins = "*")
 @RequestMapping(path = "/rest/api/1/urrea/producto")
 @RestController
 @Slf4j
@@ -85,7 +84,7 @@ public class UrreaProductController {
 
     @PatchMapping("/{codigo}")
     public ResponseEntity<UrreaProduct> updatePartial(
-            @PathVariable String codigo,
+            @PathVariable("codigo") String codigo,
             @RequestBody Map<String, Object> updates) {
 
         Optional<UrreaProduct> optionalProduct = urreaProductRepository.findByIdOrCodigo(codigo, codigo);
@@ -139,7 +138,7 @@ public class UrreaProductController {
     }
 
     @DeleteMapping("/{codigo}")
-    public ResponseEntity<UrreaProduct> deleteProduct(@PathVariable String codigo) {
+    public ResponseEntity<UrreaProduct> deleteProduct(@PathVariable("codigo") String codigo) {
 
         Optional<UrreaProduct> optionalProduct = urreaProductRepository.findByIdOrCodigo(codigo, codigo);
 
@@ -155,7 +154,7 @@ public class UrreaProductController {
     }
 
     @PutMapping("/asProduct")
-    public ResponseEntity<UrreaProduct> saveAsProduct(@RequestParam String codigo) {
+    public ResponseEntity<UrreaProduct> saveAsProduct(@RequestParam("codigo") String codigo) {
         Optional<UrreaProduct> optionalProduct = urreaProductRepository.findByIdOrCodigo(codigo, codigo);
         if (optionalProduct.isEmpty()) {
             return ResponseEntity.ok().build();
@@ -173,7 +172,7 @@ public class UrreaProductController {
     }
 
     @GetMapping("")
-    public ResponseEntity<UrreaProduct> getProduct(@RequestParam String codigo) {
+    public ResponseEntity<UrreaProduct> getProduct(@RequestParam("codigo") String codigo) {
         log.info(codigo);
         Optional<UrreaProduct> product = urreaProductRepository.findByIdOrCodigo(codigo, codigo);
         return product.map(urreaProduct -> ResponseEntity.ok().body(urreaProduct)).orElseGet(() -> ResponseEntity.notFound().build());

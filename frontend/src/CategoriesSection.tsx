@@ -157,7 +157,7 @@ const CategoriesSection = ({ title = "Explora Nuestras Categorías", categories 
                 <div className="w-50 h-1 bg-red-600 mx-auto mb-15"></div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-4">
                     {/* Iteramos sobre el array de strings recibido en las props */}
-                    {categories.filter(category => category != "")
+                    {categories.filter((category): category is string => Boolean(category && category.trim() !== ""))
                         .map((category: string) => (
                         // Corregimos la sintaxis para pasar el ícono como un string
                         <CategoryCard key={category} name={category.charAt(0).toUpperCase() + category.slice(1)} icon={String(categoryMapping[category] || '🔒')} />

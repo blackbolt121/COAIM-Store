@@ -4,7 +4,6 @@ import PedidosProductList from "./PedidosProductList.tsx";
 import OrderStatus from './OrderStatus';
 import {Product} from "../../../store/store.ts";
 import {Link, useParams} from "react-router-dom";
-import {getAccessToken} from "../../../store/auth.ts";
 import PedidosBadge from "../PedidosBadge.tsx";
 
 // --- DATOS DE EJEMPLO ---
@@ -56,10 +55,8 @@ export default function PedidosPage() {
 
     useEffect(() => {
         fetch(`${apiUrl}/rest/api/1/pedidos/${id}`, {
-            method: 'GET',
-            headers: {
-                "Authorization": `Bearer ${getAccessToken()}`,
-            }
+          method: 'GET',
+          credentials: "include"
         })
             .then(res => res.json())
             .then(res => setOrder(res))

@@ -6,7 +6,7 @@ import Signup from './components/Signup';
 import Navbar from './components/NavBar';
 import About from './components/About';
 import ContactPage from './components/ContactPage';
-import {getAccessToken, removeTokens, validateToken} from './store/auth';
+import {getStoredUser, removeSession, validateToken} from './store/auth';
 import { useEffect } from 'react';
 import { Tienda } from './components/Tienda/Tienda';
 import Footer from './components/Footer';
@@ -25,6 +25,7 @@ import QuotePage from "./components/Cotizaciones/QuotePage/QuotePage.tsx";
 import TerminosPage from "./components/Terminos/TerminosPage.tsx";
 const apiUrl = import.meta.env.VITE_API_URL;
 import Help from "./components/Help";
+import { loadUsuarioFromLocalStorage } from "./store/UserSlice.ts";
 
 function App() {
 
@@ -48,9 +49,9 @@ function App() {
                   {
                       method: "GET",
                       headers: {
-                          "Accept": "application/json",
-                          "Authorization": `Bearer ${getAccessToken()}`
-                      }
+                          "Accept": "application/json"
+                      },
+                      credentials: "include"
                   }
               )
 
@@ -75,32 +76,32 @@ function App() {
   }, [dispatch])
 
   useEffect(() => {
-    
-    //const path = location.pathname
-
-    //console.log(path);
-
-    validateToken().then( (validation: boolean) => {
-        if(!validation){
-            // console.log('Token is invalid')
-            removeTokens()
+    const bootstrapSession = async () => {
+      try {
+        const validation = await validateToken();
+        if (!validation) {
+          removeSession();
         }
-    }).catch((error)=>{
+      } catch (error) {
         console.log(error)
-        // console.log("Failed to validate");
-        removeTokens();
-    });
+        removeSession();
+      } finally {
+        dispatch(loadUsuarioFromLocalStorage());
 
-    if(getAccessToken() === null){
-      if(location.pathname.startsWith("/cart")
-          || location.pathname.startsWith("/pedidos")
-          || location.pathname.startsWith("/pedido/")
-          || location.pathname.startsWith("/cotizaciones")){
-        navigate(`/login?`)
+        if (!getStoredUser()) {
+          if (location.pathname.startsWith("/cart")
+              || location.pathname.startsWith("/pedidos")
+              || location.pathname.startsWith("/pedido/")
+              || location.pathname.startsWith("/cotizaciones")){
+            navigate(`/login?`)
+          }
+        }
       }
-    }
+    };
 
-  }, [location, navigate])
+    bootstrapSession();
+
+  }, [dispatch, location.pathname, navigate])
 
   return (
     <>
@@ -127,7 +128,7 @@ function App() {
         </Routes>
       </div>
       <Footer />
-        <Help />
+      <Help />
     </>
   )
 }

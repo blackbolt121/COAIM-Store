@@ -1,32 +1,29 @@
+import os
 from router.productoRouter import listar_productos
 from models.Producto import Producto
 from service.productoService import ProductoSmartShopMapper
-import requests
 from meilisearch import Client
 
 offset = 0
 limit = 1000
 isLast = True
 
-response = requests.api.post(
-    "http://localhost:8080/auth/login",
-    json={"email": "rego199903@gmail.com", "password": "Ruberego990301@"}
-)
-data = response.json()
-headers = {"Authorization": "Bearer " + data["access_token"]}
+API_URL = os.getenv("SMARTSHOP_API_URL", "http://localhost:8080")
+MEILI_HOST = os.getenv("MEILI_HOST", "http://localhost:7700")
+MEILI_API_KEY = os.getenv("MEILI_API_KEY")
+MEILI_INDEX_PRODUCTS = os.getenv("MEILI_INDEX_PRODUCTS", "products")
 
-# ✅ No se necesita apiKey si no tienes master key configurada
-client = Client('http://192.168.100.58:7700')
+client = Client(MEILI_HOST, MEILI_API_KEY) if MEILI_API_KEY else Client(MEILI_HOST)
 
 # Crear índice si no existe
 try:
-    client.create_index(uid='products', options={'primaryKey': 'id'})
+    client.create_index(uid=MEILI_INDEX_PRODUCTS, options={'primaryKey': 'id'})
 except Exception as e:
     if "index_already_exists" not in str(e):
         print("Error creando índice:", e)
     pass
 
-index = client.index(uid='products')
+index = client.index(uid=MEILI_INDEX_PRODUCTS)
 
 while isLast:
     payload = listar_productos(offset=offset, limit=limit)

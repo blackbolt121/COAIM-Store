@@ -8,7 +8,7 @@ import lombok.ToString;
 
 @AllArgsConstructor
 @Getter
-@ToString(of = "{status}")
+@ToString(of = "status")
 public enum PedidoStatus {
     EN_PROCESO("En processo", 1),
     ENVIADO("Enviado", 2),

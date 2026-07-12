@@ -5,9 +5,7 @@ const PromotionsCarousel = () => {
 
   const loadImages = async () => {
     const images_request = await axios.get('http://localhost:8080/rest/api/1/promotions', {
-      headers: {
-        "Authorization": `Bearer ${getAccessToken()}`
-      }
+      withCredentials: true
     })
 
     const images = await images_request.data

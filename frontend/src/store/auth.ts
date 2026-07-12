@@ -1,57 +1,50 @@
-// Guardar los tokens en localStorage
 import axios from "axios";
 import {Usuario} from "./UserSlice.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
-export const saveTokens = (accessToken: string, refreshToken: string) => {
-  localStorage.setItem('access_token', accessToken);
-  localStorage.setItem('refresh_token', refreshToken);
-};
+export const getStoredUser = (): Usuario | null => {
+  const user = localStorage.getItem("user");
 
-// Recuperar los tokens
-export const getAccessToken = () => {
-  //validateToken().then(token => {console.log(token)})
-  //    .catch(error => {console.log(error);});
-  return localStorage.getItem('access_token');
-};
-
-export const getRefreshToken = () => {
-  return localStorage.getItem('refresh_token');
-};
-
-// Eliminar los tokens (por ejemplo, cuando el usuario cierre sesión)
-export const removeTokens = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-};
-
-
-export async function validateToken() {
-  const token = localStorage.getItem('access_token');
-
-  if(!token){
-    return false;
+  if (!user) {
+    return null;
   }
-
-  const headers =  {
-    Authorization: `Bearer ${token}`
-  }
-
-  console.log(token);
 
   try {
+    return JSON.parse(user) as Usuario;
+  } catch {
+    return null;
+  }
+};
+
+export const hasSession = () => Boolean(getStoredUser());
+
+export const removeSession = () => {
+  localStorage.removeItem("user");
+};
+
+export async function validateToken() {
+  try {
     const response = await axios.post<string>(`${apiUrl}/auth/validate`,null,{
-      headers: headers,
+      headers: {
+        Accept: "application/json",
+      },
     });
     console.log(response);
+    if (response.status !== 200) {
+      removeSession();
+      return false;
+    }
 
   } catch {
+    removeSession();
     return false;
   }
   
   try{
     const usuarioRequest = await axios.post(`${apiUrl}/auth/myself`, null, {
-      headers: headers
+      headers: {
+        Accept: "application/json",
+      }
     });
     
     const usuario: Usuario = usuarioRequest.data;
@@ -60,6 +53,7 @@ export async function validateToken() {
     return true
   }catch {
     console.log("Failed to load user data");
-    return true
+    removeSession();
+    return false
   }
 }

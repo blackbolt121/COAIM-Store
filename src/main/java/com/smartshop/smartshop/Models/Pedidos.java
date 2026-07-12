@@ -34,6 +34,7 @@ public class Pedidos {
 
 
     @OneToMany(mappedBy = "pedidos", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<PedidoDetail> pedidoDetails = new HashSet<>();
 
     private double total;

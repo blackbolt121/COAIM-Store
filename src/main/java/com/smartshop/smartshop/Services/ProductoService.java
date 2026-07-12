@@ -3,11 +3,13 @@ package com.smartshop.smartshop.Services;
 import com.smartshop.smartshop.Models.Producto;
 import com.smartshop.smartshop.Models.UrreaProduct;
 import com.smartshop.smartshop.Models.Vendor;
+import com.smartshop.smartshop.Events.ProductSavedEvent;
 import com.smartshop.smartshop.Repositories.ProductRepository;
 import com.smartshop.smartshop.Repositories.VendorRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,10 +24,14 @@ public class ProductoService {
     ProductRepository productRepository;
     @Autowired
     VendorRepository vendorRepository;
+    @Autowired
+    MeilisearchProductService meilisearchProductService;
+    @Autowired
+    ApplicationEventPublisher applicationEventPublisher;
     private static final Pattern UUID_PATTERN = Pattern.compile(
             "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
     );
-    private static final Pattern SKU_PATTERN = Pattern.compile("[\\s\\-/\\\\]"); // espacio, guion, /, \
+    // private static final Pattern SKU_PATTERN = Pattern.compile("[\\s\\-/\\\\]"); // espacio, guion, /, \
     public static String classifyCode(String input) {
         if (UUID_PATTERN.matcher(input).matches()) {
             return "uuid";
@@ -58,9 +64,11 @@ public class ProductoService {
             default -> Optional.empty();
         };
     }
+    @Transactional
     public Producto saveProduct(Producto producto){
-        productRepository.save(producto);
-        return producto;
+        Producto savedProduct = productRepository.save(producto);
+        applicationEventPublisher.publishEvent(new ProductSavedEvent(savedProduct.getId()));
+        return savedProduct;
     }
 
     @Transactional
@@ -81,12 +89,14 @@ public class ProductoService {
         producto.setVendor(vendor);
         // Establecer vendor si existe
 
-        productRepository.save(producto);
+        Producto savedProduct = productRepository.save(producto);
+        meilisearchProductService.indexProduct(savedProduct, urreaProduct);
 
 
     }
 
     public void deleteProduct(String id){
         productRepository.deleteById(UUID.fromString(id));
+        meilisearchProductService.deleteProduct(id);
     }
 }

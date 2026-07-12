@@ -7,5 +7,10 @@ export interface ApiResponse {
     last: boolean;
     first: boolean;
     size: number;
+    number?: number;
     numberOfElements: number;
+    facets?: {
+        category?: Record<string, number>;
+        brand?: Record<string, number>;
+    };
 }
