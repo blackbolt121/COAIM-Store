@@ -14,7 +14,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-      APP_FRONTEND_ORIGIN: https://siscadindustrial.cloud
+      APP_FRONTEND_ORIGIN: ${APP_FRONTEND_ORIGIN:-https://siscadindustrial.cloud,https://www.siscadindustrial.cloud}
       APP_AUTH_COOKIE_SECURE: "true"
       SMARTSHOP_LOADDATA: ${SMARTSHOP_LOADDATA:-false}
       SMARTSHOP_LOADROLES: ${SMARTSHOP_LOADROLES:-true}
