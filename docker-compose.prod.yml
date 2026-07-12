@@ -33,6 +33,7 @@ services:
       MEILI_ENABLED: "true"
     networks:
       - internal
+      - dokploy-network
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -89,6 +90,8 @@ networks:
   internal:
     name: siscad-internal
     internal: true
+  dokploy-network:
+    external: true
 
 volumes:
   mysql-data:
