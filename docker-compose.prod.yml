@@ -37,6 +37,11 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.siscad-app.rule=Host(`siscadindustrial.cloud`)"
+      - "traefik.http.routers.siscad-app.entrypoints=websecure"
+      - "traefik.http.services.siscad-app.loadbalancer.server.port=8080"
 
   mysql:
     image: mysql:8.4
