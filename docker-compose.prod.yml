@@ -39,11 +39,19 @@ services:
       - no-new-privileges:true
     labels:
       - "traefik.enable=true"
+      
+      # Enrutador Principal (HTTPS Seguro)
       - "traefik.http.routers.siscad-app.rule=Host(`siscadindustrial.cloud`) || Host(`www.siscadindustrial.cloud`)"
       - "traefik.http.routers.siscad-app.entrypoints=websecure"
+      - "traefik.http.routers.siscad-app.tls=true"
       - "traefik.http.services.siscad-app.loadbalancer.server.port=8080"
       - "traefik.docker.network=dokploy-network"
-      - "traefik.http.routers.siscad-app.tls=true"
+
+      # Enrutador Secundario (HTTP -> Redirección a HTTPS)
+      - "traefik.http.routers.siscad-app-http.rule=Host(`siscadindustrial.cloud`) || Host(`www.siscadindustrial.cloud`)"
+      - "traefik.http.routers.siscad-app-http.entrypoints=web"
+      - "traefik.http.routers.siscad-app-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
   mysql:
     image: mysql:8.4
