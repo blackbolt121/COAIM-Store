@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SISCAD Admin",
   description: "Panel administrativo de SISCAD",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
