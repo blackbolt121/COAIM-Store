@@ -46,20 +46,7 @@ public class PromotionAdminController {
     @PostMapping("/create")
     public String createPromotion(@ModelAttribute Promotion promotion,
                                   @RequestParam("imageFile") MultipartFile imageFile) throws Exception {
-
-        Promotion promotion1 = new Promotion();
-        promotion1.setId(UUID.randomUUID().toString());
-        promotion1.setTitle(promotion.getTitle());
-        promotion1.setStartDate(promotion.getStartDate());
-        promotion1.setEndDate(promotion.getEndDate());
-        promotion1.setImage(imageFile.getBytes());
-        promotion1.setActive(promotion.isActive());
-        promotion.setImage(imageFile.getBytes());
-        promotion1.setDisplayOrder(promotion.getDisplayOrder());
-
-        promotionService.savePromotion(promotion1);
-
-        return "redirect:/admin/promotions";
+        return adminRedirect("/carousel");
     }
 
     @GetMapping("/edit/{id}")
@@ -71,48 +58,16 @@ public class PromotionAdminController {
     public String updatePromotion(@PathVariable("id") String id,
                                    @ModelAttribute Promotion updatedPromo,
                                    @RequestParam(value = "imageFile", required = false) MultipartFile imageFile) {
-        Optional<Promotion> promoOpt = promotionService.getById(id);
-        if (promoOpt.isEmpty()) return "redirect:/admin/promotions";
-        Promotion promotion = promoOpt.get();
-        promotion.setTitle(updatedPromo.getTitle());
-        promotion.setStartDate(updatedPromo.getStartDate());
-        promotion.setEndDate(updatedPromo.getEndDate());
-        promotion.setDisplayOrder(updatedPromo.getDisplayOrder());
-        promotion.setActive(updatedPromo.isActive());
-
-        try{
-            log.info(String.format("Is promotion image empty? %s", String.valueOf(imageFile.isEmpty())));
-            if (!imageFile.isEmpty()) {
-                byte[] image = imageFile.getBytes();
-                promotion.setImage(image);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        promotionService.savePromotion(promotion);
-
-
-        return "redirect:/admin/promotions";
+        return adminRedirect("/carousel/" + id);
     }
 
     @PostMapping("/edit/{id}/image")
     public String updateImage(@PathVariable("id") String id, @ModelAttribute Promotion promotion) throws Exception {
-        Optional<Promotion> promoOpt = promotionService.getById(id);
-        if (promoOpt.isEmpty()) return "redirect:/admin/promotions";
-        Promotion promo = promoOpt.get();
-        promo.setImage(promotion.getImage());
-        promo.setStartDate(promotion.getStartDate());
-        promo.setEndDate(promotion.getEndDate());
-        promo.setDisplayOrder(promotion.getDisplayOrder());
-        promo.setActive(promotion.isActive());
-        promo.setTitle(promotion.getTitle());
-        promotionService.savePromotion(promo);
-        return "redirect:/admin/promotions";
+        return adminRedirect("/carousel/" + id);
     }
 
     @PostMapping("/delete/{id}")
     public String deletePromotion(@PathVariable("id") String id) {
-        promotionService.deleteById(id);
-        return "redirect:/admin/promotions";
+        return adminRedirect("/carousel");
     }
 }

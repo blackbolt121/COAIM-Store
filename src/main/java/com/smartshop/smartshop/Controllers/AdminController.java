@@ -120,37 +120,7 @@ public class AdminController {
                               @RequestParam("guia") String guia,
                               @RequestParam("pedidoStatus") String pedidoStatus,
                               RedirectAttributes redirectAttributes) {
-
-        try {
-            // 1. Recuperar la entidad existente de la base de datos.
-            Pedidos orderToUpdate = pedidosRepository.findById(id)
-                    .orElseThrow(() -> new IllegalArgumentException("ID de Pedido inválido para actualizar:" + id));
-
-            // 2. Actualizar los campos de la entidad con los nuevos valores.
-            orderToUpdate.setGuia(guia);
-
-            log.info("value {}",pedidoStatus);
-            switch (pedidoStatus) {
-                case "PedidoStatus.EN_PROCESO" -> orderToUpdate.setPedidoStatus(PedidoStatus.EN_PROCESO);
-                case "PedidoStatus.ENVIADO" -> orderToUpdate.setPedidoStatus(PedidoStatus.ENVIADO);
-                case "PedidoStatus.ENTREGADO" -> orderToUpdate.setPedidoStatus(PedidoStatus.ENTREGADO);
-                default -> orderToUpdate.setPedidoStatus(PedidoStatus.CANCELADO);
-            }
-            // orderToUpdate.setPedidoStatus(pedidoStatus);
-
-            // 3. Guardar la entidad. Como la entidad ya existe, JPA ejecutará un UPDATE.
-            pedidosRepository.save(orderToUpdate);
-
-            // 4. Añadir un mensaje de éxito para mostrar en la siguiente página.
-            redirectAttributes.addFlashAttribute("successMessage", "Pedido #" + id + " actualizado correctamente.");
-
-        } catch (Exception e) {
-            // En caso de error, añadir un mensaje de error.
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al actualizar el pedido: " + e.getMessage());
-        }
-
-        // 5. Redirigir al usuario de vuelta a la lista de pedidos.
-        return "redirect:/admin/orders";
+        return adminRedirect("/pedidos/" + id);
     }
 
     @GetMapping("/logout")
@@ -219,51 +189,7 @@ public class AdminController {
 
     @PostMapping("/quotes")
     public String sendQuote(@RequestParam("correo") String correo, @RequestParam("nombre") String nombre, @RequestParam("productoSeleccionados") String productoSeleccionados, Model model) {
-
-        Resend resend = new Resend("re_fcfqJaWG_4VdJr8KzpWSwPX82y2gxw2ng");
-
-        JSONObject obj = new JSONObject(productoSeleccionados);
-
-
-        // Crear nueva cotización
-        Cotizacion cotizacion = new Cotizacion();
-        cotizacion.setNombre(nombre);
-        cotizacion.setCorreo(correo);
-        cotizacion.setItems(new ArrayList<>());
-
-        // Parsear JSON con los productos seleccionados
-
-        obj.keys().forEachRemaining(key -> {
-            Producto producto = productRepository.findById(UUID.fromString(key)).orElse(null);
-            if (producto != null) {
-                Integer quantity = obj.getJSONObject(key).getInt("cantidad");
-                QuoteItem quoteItem = QuoteItem.builder()
-                        .product(producto)
-                        .quantity(quantity)
-                        .cotizacion(cotizacion) // importante para la relación
-                        .build();
-                cotizacion.getItems().add(quoteItem);
-            }
-        });
-
-        // Guardar cotización y sus items en cascada
-        cotizacionRepository.save(cotizacion);
-
-        String html = this.generarHtmlCotizacion(cotizacion);
-
-        SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
-                .from("cotizacion@mercadourrea.com.mx")
-                .to(cotizacion.getCorreo())//"rego199903@gmail.com")
-                .subject(String.format("Cotizacion: %s", cotizacion.getId()))
-                .html(html)
-                .build();
-
-        SendEmailResponse data = resend.emails().send(sendEmailRequest);
-
-        List<Producto> productos = productRepository.findAll();
-        model.addAttribute("productos", productos);
-
-        return "cotizador";
+        return adminRedirect("/cotizaciones");
     }
 
 
@@ -293,27 +219,7 @@ public class AdminController {
 
     @PostMapping("/users/save")
     public String actualizarUsuario(@ModelAttribute Usuario usuario) {
-
-        Usuario usuarioExistente = userService.getUsuario(usuario.getId()).orElse(null);
-
-        if (usuarioExistente == null) {
-            // Manejar caso en que el usuario no exista
-            return "redirect:/admin/users";
-        }
-
-        // Solo actualizamos los campos que vienen del formulario
-        usuarioExistente.setName(usuario.getName());
-        usuarioExistente.setEmail(usuario.getEmail());
-        usuarioExistente.setCalle(usuario.getCalle());
-        usuarioExistente.setCodigoPostal(usuario.getCodigoPostal());
-        usuarioExistente.setCiudad(usuario.getCiudad());
-        usuarioExistente.setEstado(usuario.getEstado());
-        usuarioExistente.setActivo(usuario.getActivo());
-        usuarioExistente.setPais(usuario.getPais());
-        usuarioExistente.setTelefono(usuario.getTelefono());
-        usuarioExistente.setRoles(usuario.getRoles());
-        userService.save(usuarioExistente);
-        return "redirect:/admin/users";
+        return adminRedirect("/usuarios/" + usuario.getId());
     }
 
     public String generarHtmlCotizacion(Cotizacion cotizacion) {
