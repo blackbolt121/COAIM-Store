@@ -21,7 +21,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
@@ -40,7 +39,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendOrigin));
+        configuration.setAllowedOrigins(Arrays.asList(frontendOrigin.split(",")));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT, "X-CSRF-Token"));
         configuration.setExposedHeaders(Arrays.asList(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
@@ -68,6 +67,8 @@ public class SecurityConfig {
                                         "/rest/api/1/producto",
                                         "/rest/api/1/vendor/all")
                                 .permitAll()
+                                .requestMatchers("/rest/api/1/admin/**")
+                                .hasRole("ADMIN")
                                 .requestMatchers("/", "/index.html", "/assets/**",
                                         "/images/**", "/about", "/contact",
                                         "/tienda", "/cart", "/producto/**",
