@@ -1,5 +1,7 @@
 import { BadgeCheck, Factory, Gauge, Goal, Lightbulb, ListChecks, MapPin, Phone, ShieldCheck, Target, Truck, Users, Wrench } from 'lucide-react';
 import logo from "../assets/siscadindustrial-recortado.svg"
+import { useEffect } from 'react';
+import { setSeo } from '../lib/seo';
 const values = [
   { name: 'Honestidad', description: 'Transparencia en cada interacción, pedido y cotización.' },
   { name: 'Compromiso', description: 'Respuesta seria y consistente para clientes y proyectos industriales.' },
@@ -34,6 +36,16 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 }
 
 export default function About() {
+  useEffect(() => {
+    setSeo({
+      title: 'Acerca de SISCAD Industrial | Distribuidora Industrial B2B',
+      description: 'Conoce a SISCAD Industrial, distribuidor especializado en herramientas, automatización, seguridad industrial, maquinaria, instrumentación y componentes industriales.',
+      canonicalPath: '/about',
+      image: '/siscadindustrial-recortado.svg',
+      jsonLdId: 'product-jsonld',
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Hero oscuro con acentos sutiles */}

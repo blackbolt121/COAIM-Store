@@ -1,7 +1,20 @@
 import {useNavigate} from "react-router-dom";
+import { useEffect } from 'react';
+import { setSeo } from '../lib/seo';
 
 export default function NotFoundPage() {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        setSeo({
+            title: 'Página no encontrada | SISCAD Industrial',
+            description: 'La página solicitada no existe en SISCAD Industrial.',
+            canonicalPath: '/',
+            noindex: true,
+            jsonLdId: 'product-jsonld',
+        });
+    }, []);
+
     return (
         <div className="bg-gray-50 min-h-screen flex flex-col">
             {/* Contenido Principal */}

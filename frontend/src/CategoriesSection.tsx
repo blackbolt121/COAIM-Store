@@ -1,5 +1,5 @@
 
-import {useNavigate} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 interface CategoryCardProps {
     name: string;
@@ -12,12 +12,9 @@ interface CategorySectionProps {
 }
 // --- 4. Componente CategoriesSection (ACTUALIZADO) ---
 const CategoryCard = ({ name, icon }: CategoryCardProps) => {
-
-    const navigate = useNavigate()
-
-    return <a href="#"
+    return <Link
+              to={`/tienda?category=${encodeURIComponent(name)}`}
               className="group bg-white rounded-xl shadow-md p-4 flex flex-col items-center justify-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-              onClick={()=>navigate("/tienda?category="+name)}
     >
         <div className="text-4xl mb-3 text-red-600 group-hover:text-red-700 transition-colors">
             {icon}
@@ -25,7 +22,7 @@ const CategoryCard = ({ name, icon }: CategoryCardProps) => {
         <h3 className="font-semibold text-gray-700 group-hover:text-gray-900 text-sm">
             {name}
         </h3>
-    </a>
+    </Link>
 }
 
 
@@ -153,7 +150,7 @@ const CategoriesSection = ({ title = "Explora Nuestras Categorías", categories 
     return (
         <div className="bg-white py-12 sm:py-16">
             <div className="container mx-auto px-4">
-                <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight text-center mb-2">{title}</h1>
+                <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight text-center mb-2">{title}</h2>
                 <div className="w-50 h-1 bg-red-600 mx-auto mb-15"></div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8 gap-4">
                     {/* Iteramos sobre el array de strings recibido en las props */}

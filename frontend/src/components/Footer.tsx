@@ -125,7 +125,7 @@ const Footer = () => {
                         <Link to="/" className="inline-block rounded-2xl bg-white p-4 shadow-sm">
                             <img
                                 src={logo}
-                                alt="Siscad Industrial"
+                                alt="SISCAD Industrial"
                                 className="h-10 w-auto"
                             />
                         </Link>
@@ -277,7 +277,7 @@ const Footer = () => {
                         &copy; {currentYear} SISCAD Industrial C.A. C.V.. Todos los derechos reservados.
                     </p>
                     <p className="text-xs text-slate-600 tracking-wide">
-                        Siscad Industrial
+                        SISCAD Industrial
                     </p>
                 </div>
             </div>
