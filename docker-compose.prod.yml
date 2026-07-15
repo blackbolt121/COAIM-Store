@@ -14,7 +14,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-      APP_FRONTEND_ORIGIN: ${APP_FRONTEND_ORIGIN:-https://siscadindustrial.cloud,https://www.siscadindustrial.cloud}
+      APP_FRONTEND_ORIGIN: ${APP_FRONTEND_ORIGIN:-https://siscadindustrial.cloud,https://www.siscadindustrial.cloud,https://admin.siscadindustrial.cloud}
+      APP_ADMIN_ORIGIN: ${APP_ADMIN_ORIGIN:-https://admin.siscadindustrial.cloud}
       APP_AUTH_COOKIE_SECURE: "true"
       SMARTSHOP_LOADDATA: ${SMARTSHOP_LOADDATA:-false}
       SMARTSHOP_LOADROLES: ${SMARTSHOP_LOADROLES:-true}
@@ -53,6 +54,29 @@ services:
       - "traefik.http.routers.siscad-app-http.entrypoints=web"
       - "traefik.http.routers.siscad-app-http.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        ADMIN_API_PROXY_URL: http://app:8080
+    networks:
+      - dokploy-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.siscad-admin.rule=Host(`admin.siscadindustrial.cloud`)"
+      - "traefik.http.routers.siscad-admin.entrypoints=websecure"
+      - "traefik.http.routers.siscad-admin.service=siscad-admin"
+      - "traefik.http.routers.siscad-admin.tls=true"
+      - "traefik.http.services.siscad-admin.loadbalancer.server.port=3000"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.siscad-admin-http.rule=Host(`admin.siscadindustrial.cloud`)"
+      - "traefik.http.routers.siscad-admin-http.entrypoints=web"
+      - "traefik.http.routers.siscad-admin-http.middlewares=redirect-to-https"
 
   mysql:
     image: mysql:8.4

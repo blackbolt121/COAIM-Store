@@ -6,6 +6,12 @@ http:
         - web
       service: siscad
 
+    admin-localhost:
+      rule: Host(`admin.localhost`)
+      entryPoints:
+        - web
+      service: admin
+
     siscad:
       rule: Host(`siscadindustrial.cloud`)
       entryPoints:
@@ -34,3 +40,8 @@ http:
       loadBalancer:
         servers:
           - url: http://app:8080
+
+    admin:
+      loadBalancer:
+        servers:
+          - url: http://admin:3000

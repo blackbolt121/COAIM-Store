@@ -12,6 +12,8 @@ import com.smartshop.smartshop.Repositories.ProductRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -96,7 +98,30 @@ public class MeilisearchProductService {
             Double maxPrice,
             String sort
     ) {
-        if (!enabled || query == null || query.trim().isBlank()) {
+        if (query == null || query.trim().isBlank()) {
+            Page<Producto> products = productRepository.findByFilters(
+                    null,
+                    category == null || category.isBlank() ? null : List.of(category),
+                    minPrice,
+                    maxPrice,
+                    brand,
+                    PageRequest.of(Math.max(page, 0), Math.max(size, 1))
+            );
+            return SearchResponseDto.<Producto>builder()
+                    .content(products.getContent())
+                    .totalElements(products.getTotalElements())
+                    .totalPages(products.getTotalPages())
+                    .number(products.getNumber())
+                    .size(products.getSize())
+                    .numberOfElements(products.getNumberOfElements())
+                    .first(products.isFirst())
+                    .last(products.isLast())
+                    .empty(products.isEmpty())
+                    .facets(Map.of())
+                    .build();
+        }
+
+        if (!enabled) {
             return emptyResponse(page, size);
         }
 

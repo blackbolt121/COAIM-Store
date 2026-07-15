@@ -4,6 +4,7 @@ import com.smartshop.smartshop.Models.Promotion;
 import com.smartshop.smartshop.Services.PromotionService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,13 @@ import java.util.UUID;
 public class PromotionAdminController {
 
     private final PromotionService promotionService;
+    @Value("${app.admin.origin:http://localhost:3000}")
+    private String adminOrigin;
+
+    private String adminRedirect(String path) {
+        String base = adminOrigin.endsWith("/") ? adminOrigin.substring(0, adminOrigin.length() - 1) : adminOrigin;
+        return "redirect:" + base + path;
+    }
 
     public PromotionAdminController(PromotionService promotionService) {
         this.promotionService = promotionService;
@@ -27,15 +35,12 @@ public class PromotionAdminController {
 
     @GetMapping
     public String listPromotions(Model model) {
-        model.addAttribute("promotions", promotionService.findAll());
-        return "promotions";
+        return adminRedirect("/carousel");
     }
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        model.addAttribute("promotion", new Promotion());
-        model.addAttribute("action", "/admin/promotions/create");
-        return "promotion_form";
+        return adminRedirect("/carousel/create");
     }
 
     @PostMapping("/create")
@@ -59,12 +64,7 @@ public class PromotionAdminController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") String id, Model model) {
-        log.info("Showing promotion edit: " + id);
-        Optional<Promotion> promo = promotionService.getById(id);
-        if (promo.isEmpty()) return "redirect:/admin/promotions";
-        model.addAttribute("promotion", promo.get());
-        model.addAttribute("action", "/admin/promotions/edit/" + id);
-        return "promotion_form";
+        return adminRedirect("/carousel/" + id);
     }
 
     @PostMapping("/edit/{id}")

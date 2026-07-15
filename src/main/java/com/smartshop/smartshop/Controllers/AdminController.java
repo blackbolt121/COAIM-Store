@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.json.JSONObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,15 +50,17 @@ public class AdminController {
     private final UserRepository userRepository;
     private final PedidoRepository pedidosRepository;
     private final DashboardService dashboardService;
+    @Value("${app.admin.origin:http://localhost:3000}")
+    private String adminOrigin;
+
+    private String adminRedirect(String path) {
+        String base = adminOrigin.endsWith("/") ? adminOrigin.substring(0, adminOrigin.length() - 1) : adminOrigin;
+        return "redirect:" + base + path;
+    }
 
     @GetMapping("")
     public String index(Model model){
-        try{
-            return "redirect:/admin/dashboard";
-        }catch(Exception e){
-            log.info("Redirecting to login...");
-            return "redirect:/admin/login";
-        }
+        return adminRedirect("/");
     }
 
     @RequestMapping("/error")
@@ -83,143 +86,33 @@ public class AdminController {
 
     @GetMapping("login")
     public String login(@RequestParam(value = "error", required = false, defaultValue = "false") boolean error, Model model, @CookieValue(value = "access_token", required = false) String token, HttpServletRequest request, HttpServletResponse response) {
-
-        if(token == null){
-            log.info("Redirecting to login...");
-        }
-
-        if(token != null){
-            log.info(token);
-            String username = jwtService.extractUsername(token);
-            Usuario usuario = userService.getUserByEmail(username);
-            if(!jwtService.isTokenValid(token, usuario)){
-                if (request.getCookies() != null) {
-                    for (Cookie cookie : request.getCookies()) {
-                        cookie.setValue("");
-                        cookie.setPath("/");
-                        cookie.setMaxAge(0);
-                        response.addCookie(cookie);
-                    }
-                }
-                return "redirect:/admin/login";
-            };
-
-            log.info(username);
-            Usuario u = userService.getUserByEmail(username);
-            if(u != null){
-                jwtService.isTokenValid(token, u);
-                return "redirect:/admin/dashboard";
-            }
-        }
-        log.info("Login Request");
-        model.addAttribute("error", error);
-        return "login";
+        return adminRedirect("/login");
     }
 
     @PostMapping("login")
     public String login(@RequestParam("email") String email, @RequestParam("password") String password, HttpServletResponse response) {
-        try{
-
-            AuthRequest authRequest = new AuthRequest(email, password);
-            TokenResponse tr = authService.authenticate(authRequest);
-            Usuario user = userService.getUserByEmail(authRequest.email());
-            Cookie cookie = new Cookie("access_token", tr.accessToken());
-            cookie.setMaxAge(60 * 60 * 24); // 1 día
-            cookie.setPath("/"); // Disponible en toda la app
-            cookie.setHttpOnly(true); // No accesible desde JS
-            cookie.setSecure(false); // Cámbialo a true si usas HTTPS
-            response.addCookie(cookie);
-
-            cookie = new Cookie("adminId", user.getId());
-            cookie.setMaxAge(60 * 60 * 24); // 1 día
-            cookie.setPath("/"); // Disponible en toda la app
-            cookie.setHttpOnly(true); // No accesible desde JS
-            cookie.setSecure(false); // Cámbialo a true si usas HTTPS
-            response.addCookie(cookie);
-
-            return "redirect:/admin/dashboard";
-        }catch (Exception e){
-            return "redirect:/login?error=true";
-        }
+        return adminRedirect("/login");
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dashboard")
     public String dashboard(@CookieValue(value = "adminId") String id, Model model, HttpServletResponse response, HttpServletRequest request) {
-        Usuario u = userService.getUserByEmail(id);
-        try{
-            SecurityContext context = SecurityContextHolder.getContext();
-            Usuario usuario = userService.getUserByContext();
-            boolean isAdmin = usuario.getRoles().stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
-            log.info(isAdmin ? "Admin" : "User");
-            if(!isAdmin){
-                throw new Exception("You do not have permission to access this page");
-            }
-        }catch(Exception e){
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    Cookie deleteCookie = new Cookie(cookie.getName(), "");
-                    deleteCookie.setMaxAge(0); // Expira inmediatamente
-                    deleteCookie.setPath("/"); // Asegúrate de que coincida con el path usado para setearla
-                    deleteCookie.setHttpOnly(cookie.isHttpOnly());
-                    deleteCookie.setSecure(cookie.getSecure());
-                    response.addCookie(deleteCookie);
-                }
-            }
-            log.info("Redirecting to Login");
-            return "login";
-        }
-
-
-
-        model.addAttribute("usuario", u);
-
-        userService.getUserByContext();
-        log.info("Redirecting to dashboard");
-        Long user_count = userRepository.count();
-        Long total_productos = productRepository.count();
-
-
-
-        model.addAttribute("totalUsuarios", user_count);
-        model.addAttribute("totalProductos", total_productos);
-        model.addAttribute("pedidosNuevos", dashboardService.getNuevosPedidosCount());
-        model.addAttribute("ultimosPedidos", dashboardService.getUltimosPedidos());
-        model.addAttribute("ingresosMes", dashboardService.getIngresosMesActual());
-        model.addAttribute("salesDataJson", dashboardService.getSalesDataForChart());
-        model.addAttribute("categoryDataJson", dashboardService.getCategoryDataForChart());
-        return "panel";
+        return adminRedirect("/dashboard");
     }
 
     @GetMapping("/users")
     public String users(Model model) {
-        List<Usuario> usuario = userService.getAllUsers();
-        model.addAttribute("usuarios", usuario);
-        return "usuarios";
+        return adminRedirect("/usuarios");
     }
 
     @GetMapping("/orders")
     public String listAllOrders(Model model) {
-        // --- SOLUCIÓN ---
-        // Se obtienen todos los pedidos desde el PedidosRepository,
-        // no los carritos desde un CartService.
-        // findAll() es un método estándar de JpaRepository.
-        List<Pedidos> allOrders = pedidosRepository.findAll();
-        // Se añade la lista de 'Pedidos' al modelo con el nombre "orders",
-        // que es el que la vista de Thymeleaf espera.
-        model.addAttribute("orders", allOrders);
-        // Retorna el nombre del archivo html (sin la extensión).
-        // Asumiendo que tu archivo se llama 'pedidos.html'.
-        return "pedidos";
+        return adminRedirect("/pedidos");
     }
 
     @GetMapping("/order/{id}")
     public String pedido(@PathVariable("id") String id, Model model) {
-        pedidosRepository.findById(Long.valueOf(id));
-        model.addAttribute("order", pedidosRepository.findById(Long.valueOf(id)).orElse(null));
-        model.addAttribute("id", Long.valueOf(id));
-        return "pedido_edit";
+        return adminRedirect("/pedidos/" + id);
     }
 
     @PostMapping("/order/update")
@@ -274,7 +167,7 @@ public class AdminController {
                 response.addCookie(deleteCookie);
             }
         }
-        return "redirect:/admin/login";
+        return adminRedirect("/login");
     }
 
     @GetMapping("/rest/logout")
@@ -311,29 +204,17 @@ public class AdminController {
 
     @GetMapping("/usuario/{id}")
     public String usuario(@PathVariable("id") String id, Model model) {
-        Usuario usuario = userService.getUsuario(id).orElse(null);
-        model.addAttribute("usuario", usuario);
-        return "usuario";
+        return adminRedirect("/usuarios/" + id);
     }
 
     @GetMapping("/usuario/edit/{id}")
     public String usuarioEdit(@PathVariable("id") String id, Model model) {
-        Usuario usuario = userService.getUsuario(id).orElse(null);
-
-        List<Role> roles = roleRepository.findAll();
-
-        model.addAttribute("usuario", usuario);
-
-        model.addAttribute("roles", roles);
-
-        return "usuario-editar";
+        return adminRedirect("/usuarios/" + id);
     }
 
     @GetMapping("/quotes")
     public String showQuotesForm(Model model) {
-        List<Producto> productos = productRepository.findAll();
-        model.addAttribute("productos", productos);
-        return "cotizador";
+        return adminRedirect("/cotizaciones");
     }
 
     @PostMapping("/quotes")
@@ -397,55 +278,17 @@ public class AdminController {
                                @RequestParam(value = "maxPrice") Optional<Double> maxPrice,
                                @RequestParam(value = "brand") Optional<String> brand) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Producto> productPage;
-
-        // Decide qué método del repositorio llamar
-        if (name.isPresent() || categories.isPresent() || minPrice.isPresent() || maxPrice.isPresent() || brand.isPresent()) {
-            productPage = productRepository.findByFilters(
-                    name.orElse(null),
-                    categories.orElse(null),
-                    minPrice.orElse(null),
-                    maxPrice.orElse(null),
-                    brand.orElse(null),
-                    pageable
-            );
-        } else {
-            productPage = productRepository.findAll(pageable);
-        }
-
-        model.addAttribute("productPage", productPage);
-
-        // Lógica para generar los números de página a mostrar
-        int totalPages = productPage.getTotalPages();
-        if (totalPages > 0) {
-            List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages)
-                    .boxed()
-                    .collect(Collectors.toList());
-            model.addAttribute("pageNumbers", pageNumbers);
-        }
-
-        return "productos"; // El nombre de tu vista principal
+        return adminRedirect("/productos");
     }
 
     @GetMapping("/product/{id}")
     public String showProduct(@PathVariable("id") String id, Model model) {
-
-        log.info(id.toString());
-        Optional<Producto> producto = productoService.getProduct(id);
-
-        Producto product1 = producto.orElse(null);
-
-
-        model.addAttribute("producto", product1);
-        return "producto";
+        return adminRedirect("/productos/" + id);
     }
 
     @GetMapping("/quotes/all")
     public String showAllQuotes(Model model) {
-
-
-        return "cotizaciones";
+        return adminRedirect("/cotizaciones");
     }
 
     @PostMapping("/users/save")

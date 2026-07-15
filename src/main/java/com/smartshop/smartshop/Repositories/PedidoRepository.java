@@ -9,12 +9,13 @@ import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import com.smartshop.smartshop.DTO.MonthlySalesDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 public interface PedidoRepository extends JpaRepository<Pedidos, Long> {
@@ -32,7 +33,15 @@ public interface PedidoRepository extends JpaRepository<Pedidos, Long> {
             "ORDER BY FUNCTION('YEAR', p.createdAt), FUNCTION('MONTH', p.createdAt)")
     List<Object[]> findMonthlySalesRawData(@Param("startDate") LocalDateTime startDate);
 
+    @EntityGraph(attributePaths = {"usuario", "pedidoDetails"})
     List<Pedidos> findTop5ByOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = {"usuario", "pedidoDetails"})
+    List<Pedidos> findAllByOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = {"usuario", "pedidoDetails", "pedidoDetails.producto"})
+    @Query("select p from Pedidos p where p.id = :id")
+    Optional<Pedidos> findByIdWithAdminDetails(@Param("id") Long id);
 
     long countByPedidoStatusIn(List<PedidoStatus> statuses);
 
