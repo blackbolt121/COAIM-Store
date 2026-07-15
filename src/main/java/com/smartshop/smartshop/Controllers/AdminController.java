@@ -10,7 +10,6 @@ import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.json.JSONObject;
@@ -36,7 +35,6 @@ import java.util.*;
 @Slf4j
 @Controller
 @RequestMapping(path = "/admin")
-@AllArgsConstructor
 public class AdminController {
 
     private final AuthService authService;
@@ -52,6 +50,30 @@ public class AdminController {
     private final DashboardService dashboardService;
     @Value("${app.admin.origin:http://localhost:3000}")
     private String adminOrigin;
+
+    public AdminController(AuthService authService,
+                           UserService userService,
+                           JwtService jwtService,
+                           CartService cartService,
+                           ProductRepository productRepository,
+                           CotizacionRepository cotizacionRepository,
+                           RoleRepository roleRepository,
+                           ProductoService productoService,
+                           UserRepository userRepository,
+                           PedidoRepository pedidosRepository,
+                           DashboardService dashboardService) {
+        this.authService = authService;
+        this.userService = userService;
+        this.jwtService = jwtService;
+        this.cartService = cartService;
+        this.productRepository = productRepository;
+        this.cotizacionRepository = cotizacionRepository;
+        this.roleRepository = roleRepository;
+        this.productoService = productoService;
+        this.userRepository = userRepository;
+        this.pedidosRepository = pedidosRepository;
+        this.dashboardService = dashboardService;
+    }
 
     private String adminRedirect(String path) {
         String base = adminOrigin.endsWith("/") ? adminOrigin.substring(0, adminOrigin.length() - 1) : adminOrigin;
