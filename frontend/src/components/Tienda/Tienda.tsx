@@ -10,6 +10,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import SearchComponent from "./SearchComponent.tsx";
 import FiltersSidebar from "./FiltersSideBar.tsx";
 import { ApiResponse } from "../../types/APIResponse.ts";
+import { setSeo } from "../../lib/seo";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -170,6 +171,16 @@ export const Tienda = () => {
         searchParams.get("brand") ||
         (isSearchMode && searchParams.get("sort") !== "relevance")
     );
+
+    useEffect(() => {
+        setSeo({
+            title: 'Tienda SISCAD Industrial | Catálogo Industrial y Cotización',
+            description: 'Explora el catálogo industrial de SISCAD Industrial con herramientas, automatización, seguridad industrial, maquinaria, instrumentación, refacciones y suministros.',
+            canonicalPath: '/tienda',
+            image: '/siscadindustrial-recortado.svg',
+            jsonLdId: 'product-jsonld',
+        });
+    }, []);
 
     const clearSearch = () => {
         const newParams = new URLSearchParams(searchParams);

@@ -10,6 +10,8 @@ import {
   FaIndustry,
   FaArrowRight,
 } from "react-icons/fa";
+import { useEffect } from "react";
+import { setSeo } from "../lib/seo";
 
 interface ContactMethodProps {
   href: string;
@@ -142,6 +144,16 @@ const BranchCard = ({
 );
 
 export default function ContactPage() {
+  useEffect(() => {
+    setSeo({
+      title: 'Contacto SISCAD Industrial | Cotizaciones y Atención B2B',
+      description: 'Contacta a SISCAD Industrial para cotizaciones, asesoría técnica y atención comercial en herramientas, automatización, seguridad industrial, maquinaria e instrumentación.',
+      canonicalPath: '/contact',
+      image: '/siscadindustrial-recortado.svg',
+      jsonLdId: 'product-jsonld',
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* --- Hero --- */}

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 
 interface ProductCardProps {
   id: string
@@ -10,19 +10,10 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ id, name, sku, price, description, imageUrl } : ProductCardProps) => {
-  // const navigate = useNavigate(); // Esto funcionaría en tu app con React Router configurado.
-  const navigate = useNavigate()
-
-  const handleCardClick = () => {
-    navigate(`/producto/${encodeURIComponent(id)}`)
-    // navigate(`/producto/${encodeURIComponent(id)}`); // Esta sería la llamada real.
-  };
-
   return (
-      // Reemplazamos <Card> por <div>, manteniendo tus clases exactas.
-      <div
+      <Link
+          to={`/producto/${encodeURIComponent(id)}`}
           className="w-72 h-[28rem] bg-white shadow-lg hover:cursor-pointer flex flex-col justify-between p-4 rounded-lg transform hover:-translate-y-1 hover:shadow-xl transition-all duration-300 ease-in-out"
-          onClick={handleCardClick}
           key={id}
       >
         <img
@@ -50,7 +41,7 @@ const ProductCard = ({ id, name, sku, price, description, imageUrl } : ProductCa
             </p>
           </div>
         </div>
-      </div>
+      </Link>
   );
 };
 

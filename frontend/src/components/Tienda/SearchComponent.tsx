@@ -92,16 +92,21 @@ const SearchComponent: React.FC = () => {
 
     return (
         <div className="w-full max-w-2xl mx-auto relative" ref={searchRef}>
+            <label htmlFor="site-search" className="sr-only">
+                Buscar herramientas, marcas o número de parte
+            </label>
             <form className="relative" onSubmit={handleSubmit}>
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Search className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
+                    id="site-search"
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => setShowResults(true)}
                     placeholder="Buscar herramientas, marcas o número de parte..."
+                    aria-label="Buscar herramientas, marcas o número de parte"
                     className="w-full pl-11 pr-36 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200"
                 />
                 {isLoading && (

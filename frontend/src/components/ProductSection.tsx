@@ -37,7 +37,7 @@ const ProductsSection = ( {productData, title}: ProductSectionProps) => {
     return (
         <div className="">
             <div className='container mx-auto px-4'>
-                <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight text-center mb-2">{title}</h1>
+                <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl tracking-tight text-center mb-2">{title}</h2>
                 <div className="w-24 h-1 bg-primary mx-auto mb-12 rounded-full"></div>
                 <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 justify-items-center">
                     {renderContent()}

@@ -8,6 +8,7 @@ import { addToCart } from '../../store/cartSlice';
 import { AppDispatch, Product } from '../../store/store';
 import { Comments } from '../Comments/Comments';
 import { ZoomImage } from "../ZoomImage.tsx";
+import { setSeo } from '../../lib/seo';
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -229,6 +230,39 @@ export const ProductPage = () => {
         }
         fetchProductDetails().catch();
     }, [id]);
+
+    useEffect(() => {
+        if (!product) return;
+
+        const canonicalPath = `/producto/${encodeURIComponent(String(product.id))}`;
+        setSeo({
+            title: `${product.name} | SISCAD Industrial`,
+            description: product.description || 'Producto industrial disponible en SISCAD Industrial.',
+            canonicalPath,
+            image: product.imageUrl || '/siscadindustrial-recortado.svg',
+            type: 'product',
+            jsonLdId: 'product-jsonld',
+            jsonLd: {
+                '@context': 'https://schema.org',
+                '@type': 'Product',
+                name: product.name,
+                description: product.description || 'Producto industrial disponible en SISCAD Industrial.',
+                image: product.imageUrl ? [product.imageUrl] : undefined,
+                sku: product.sku,
+                brand: {
+                    '@type': 'Brand',
+                    name: product.vendor?.vendorName || 'SISCAD Industrial',
+                },
+                offers: {
+                    '@type': 'Offer',
+                    priceCurrency: 'MXN',
+                    price: product.price,
+                    availability: 'https://schema.org/InStock',
+                    url: `https://siscadindustrial.cloud${canonicalPath}`,
+                },
+            },
+        });
+    }, [product]);
 
     const handleQuantityChange = (amount: number) => {
         setQuantity(prev => Math.max(1, prev + amount));
