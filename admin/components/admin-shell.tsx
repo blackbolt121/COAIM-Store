@@ -3,23 +3,50 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getCurrentUser } from "@/lib/api";
 import { clearAdminSessionCookie } from "@/lib/session";
 import { logoutAdmin } from "@/lib/api";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/usuarios", label: "Usuarios" },
-  { href: "/pedidos", label: "Pedidos" },
-  { href: "/cotizaciones", label: "Cotizaciones" },
-  { href: "/productos", label: "Productos" },
-  { href: "/carousel", label: "Carousel" },
+  { href: "/dashboard", label: "Dashboard", roles: ["ROLE_ADMIN"] },
+  { href: "/usuarios", label: "Usuarios", roles: ["ROLE_ADMIN"] },
+  { href: "/roles", label: "Roles", roles: ["ROLE_ADMIN"] },
+  { href: "/grupos", label: "Grupos", roles: ["ROLE_ADMIN"] },
+  { href: "/pedidos", label: "Pedidos", roles: ["ROLE_ADMIN"] },
+  { href: "/cotizaciones", label: "Cotizaciones", roles: ["ROLE_ADMIN", "ROLE_SALES"] },
+  { href: "/productos", label: "Productos", roles: ["ROLE_ADMIN", "ROLE_SALES"] },
+  { href: "/carousel", label: "Carousel", roles: ["ROLE_ADMIN"] },
 ] as const;
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [roles, setRoles] = useState<string[]>(["ROLE_SALES"]);
+
+  useEffect(() => {
+    let active = true;
+
+    getCurrentUser()
+      .then((profile) => {
+        if (!active) return;
+        setRoles((profile.roles ?? []).map((role) => role.name));
+      })
+      .catch(() => {
+        if (!active) return;
+        setRoles([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => item.roles.some((role) => roles.some((currentRole) => currentRole === role))),
+    [roles],
+  );
 
   const handleLogout = async () => {
     try {
@@ -53,7 +80,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav className="p-4 space-y-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
                 <Link
@@ -122,7 +149,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   <Image src="/siscadindustrial-recortado.svg" alt="SISCAD" width={160} height={44} className="h-auto w-40" />
                 </div>
                 <nav className="space-y-2 py-4">
-                  {navItems.map((item) => {
+                  {visibleNavItems.map((item) => {
                     const active = pathname.startsWith(item.href);
                     return (
                       <Link

@@ -12,6 +12,7 @@ public record AdminUserUpdateRequest(
         String pais,
         String codigoPostal,
         Boolean activo,
-        Set<String> roles
+        Set<Long> roleIds,
+        Set<Long> groupIds
 ) {
 }

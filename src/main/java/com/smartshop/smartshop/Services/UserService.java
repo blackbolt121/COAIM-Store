@@ -5,7 +5,7 @@ import com.smartshop.smartshop.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,9 +35,12 @@ public class UserService {
 
     public Usuario getUserByContext(){
         SecurityContext context = SecurityContextHolder.getContext();
-        User user = (User) context.getAuthentication().getPrincipal();
-        Optional<Usuario> opt_usuario = userRepository.findByEmail(user.getUsername());
-        return opt_usuario.get();
+        Object principal = context.getAuthentication() != null ? context.getAuthentication().getPrincipal() : null;
+        if (!(principal instanceof UserDetails userDetails)) {
+            return null;
+        }
+
+        return userRepository.findByEmail(userDetails.getUsername()).orElse(null);
     }
 
     public Usuario getUserByEmail(String email){

@@ -1,6 +1,5 @@
 package com.smartshop.smartshop.DTO;
 
-import com.smartshop.smartshop.Models.Role;
 import com.smartshop.smartshop.Models.Usuario;
 
 import java.time.LocalDateTime;
@@ -25,7 +24,8 @@ public record UsuarioDTO(
         Boolean activo,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        Set<String> roles
+        Set<EntityRefDTO> roles,
+        Set<EntityRefDTO> groups
 ) {
     /**
      * Método de fábrica estático para crear el record a partir de la entidad.
@@ -36,9 +36,15 @@ public record UsuarioDTO(
             return null;
         }
 
-        Set<String> rolesNombres = (usuario.getRoles() != null)
+        Set<EntityRefDTO> rolesNombres = (usuario.getRoles() != null)
                 ? usuario.getRoles().stream()
-                .map(Role::getName)
+                .map(role -> new EntityRefDTO(role.getId(), role.getName()))
+                .collect(Collectors.toSet())
+                : Collections.emptySet();
+
+        Set<EntityRefDTO> groupsNames = (usuario.getGroups() != null)
+                ? usuario.getGroups().stream()
+                .map(group -> new EntityRefDTO(group.getId(), group.getName()))
                 .collect(Collectors.toSet())
                 : Collections.emptySet();
 
@@ -56,7 +62,8 @@ public record UsuarioDTO(
                 usuario.getActivo(),
                 usuario.getCreatedAt(),
                 usuario.getUpdatedAt(),
-                rolesNombres
+                rolesNombres,
+                groupsNames
         );
     }
 }

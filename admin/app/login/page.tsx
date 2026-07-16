@@ -24,9 +24,9 @@ export default function LoginPage() {
       const profile = await getCurrentUser();
       const roles = profile.roles ?? [];
 
-      if (!roles.includes("ROLE_ADMIN")) {
+      if (!roles.some((role) => role.name === "ROLE_ADMIN" || role.name === "ROLE_SALES")) {
         await logoutAdmin().catch(() => undefined);
-        setError("Tu cuenta no tiene permisos de administrador. Usa una cuenta con rol ROLE_ADMIN.");
+        setError("Tu cuenta no tiene acceso a Cotizanet. Usa una cuenta con rol ROLE_ADMIN o ROLE_SALES.");
         return;
       }
 
@@ -36,9 +36,9 @@ export default function LoginPage() {
     } catch (loginError) {
       const message = loginError instanceof Error ? loginError.message : "No se pudo iniciar sesión.";
       setError(
-        message.includes("401") || message.includes("403")
-          ? "Credenciales inválidas o cuenta sin acceso administrativo."
-          : message,
+          message.includes("401") || message.includes("403")
+            ? "Credenciales inválidas o cuenta sin acceso a Cotizanet."
+            : message,
       );
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ export default function LoginPage() {
         <div className="space-y-2 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">Acceso administrativo</p>
           <h1 className="text-2xl font-semibold text-zinc-950">Iniciar sesión</h1>
-          <p className="text-sm text-zinc-500">Panel operativo para usuarios con rol administrador.</p>
+          <p className="text-sm text-zinc-500">Panel operativo para usuarios de ventas y administradores.</p>
         </div>
 
         <div className="mt-8 space-y-5">

@@ -33,7 +33,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-coaim_app_local}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-      APP_FRONTEND_ORIGIN: http://localhost:8080,http://localhost:3000,http://localhost:5173,http://admin.localhost,http://admin.localhost:3000
+      APP_FRONTEND_ORIGIN: http://localhost:8080,http://localhost:3000,http://localhost:5173,http://admin.localhost,http://admin.localhost:3000,http://localhost:9000
       APP_ADMIN_ORIGIN: http://admin.localhost:3000
       APP_AUTH_COOKIE_SECURE: "false"
       SMARTSHOP_LOADDATA: "true"

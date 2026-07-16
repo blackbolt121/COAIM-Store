@@ -3,6 +3,11 @@ const API_BASE_URL = rawApiBaseUrl ? rawApiBaseUrl.replace(/\/$/, "") : "";
 
 type JsonObject = Record<string, unknown>;
 
+export type EntityRef = {
+  id: number;
+  name: string;
+};
+
 function getCookie(name: string) {
   if (typeof document === "undefined") return null;
 
@@ -28,7 +33,12 @@ export type AdminUser = {
   activo?: boolean | null;
   createdAt?: string | null;
   updatedAt?: string | null;
-  roles?: string[] | null;
+  roles?: EntityRef[] | null;
+  groups?: EntityRef[] | null;
+};
+
+export type NamedEntityPayload = {
+  name: string;
 };
 
 export type AdminOrder = {
@@ -181,6 +191,58 @@ export type Promotion = {
   displayOrder?: number | null;
 };
 
+export type CotizacionEstado = "BORRADOR" | "ENVIADA";
+
+export type CotizacionCreator = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type CotizacionItem = {
+  productId?: string | null;
+  productName?: string | null;
+  sku?: string | null;
+  imageUrl?: string | null;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+};
+
+export type CotizacionListItem = {
+  id: string;
+  nombre: string;
+  correo: string;
+  estado: CotizacionEstado;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  creadoPor?: CotizacionCreator | null;
+  itemsCount: number;
+  total: number;
+};
+
+export type CotizacionDetail = CotizacionListItem & {
+  items: CotizacionItem[];
+};
+
+export type CotizacionPage = {
+  content: CotizacionListItem[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+};
+
+export type CotizacionCreatePayload = {
+  nombre: string;
+  correo: string;
+  productoSeleccionados: Record<string, { cantidad: number }>;
+  estado?: CotizacionEstado;
+};
+
 export async function loginAdmin(email: string, password: string) {
   return apiFetch<AuthResponse>("/auth/login", {
     method: "POST",
@@ -197,7 +259,7 @@ export async function logoutAdmin() {
 }
 
 export async function getCurrentUser() {
-  return apiFetch<UserProfile>("/auth/myself", { method: "POST" });
+  return apiFetch<AdminUser>("/rest/api/1/myself");
 }
 
 export async function getProductCount() {
@@ -318,6 +380,45 @@ export async function deletePromotion(id: string) {
   });
 }
 
+export async function getCotizaciones(params: {
+  q?: string;
+  estado?: CotizacionEstado;
+  destinatario?: string;
+  creador?: string;
+  page?: number;
+  size?: number;
+}) {
+  const query = new URLSearchParams();
+
+  if (params.q) query.set("q", params.q);
+  if (params.estado) query.set("estado", params.estado);
+  if (params.destinatario) query.set("destinatario", params.destinatario);
+  if (params.creador) query.set("creador", params.creador);
+  query.set("page", String(params.page ?? 0));
+  query.set("size", String(params.size ?? 10));
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return apiFetch<CotizacionPage>(`/rest/api/1/cotizaciones${suffix}`);
+}
+
+export async function getCotizacion(id: string) {
+  return apiFetch<CotizacionDetail>(`/rest/api/1/cotizaciones/${encodeURIComponent(id)}`);
+}
+
+export async function createCotizacion(payload: CotizacionCreatePayload) {
+  return apiFetch<CotizacionDetail>("/rest/api/1/cotizaciones", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCotizacion(id: string, payload: CotizacionCreatePayload) {
+  return apiFetch<CotizacionDetail>(`/rest/api/1/cotizaciones/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getAdminUsers() {
   return apiFetch<AdminUser[]>("/rest/api/1/admin/users");
 }
@@ -326,10 +427,69 @@ export async function getAdminUser(id: string) {
   return apiFetch<AdminUser>(`/rest/api/1/admin/users/${id}`);
 }
 
-export async function updateAdminUser(id: string, payload: Partial<AdminUser> & { roles?: string[] }) {
+export async function updateAdminUser(
+  id: string,
+  payload: Partial<Omit<AdminUser, "roles" | "groups">> & { roleIds?: number[]; groupIds?: number[] },
+) {
   return apiFetch<AdminUser>(`/rest/api/1/admin/users/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function getAdminRoles() {
+  return apiFetch<EntityRef[]>("/rest/api/1/admin/roles");
+}
+
+export async function getAdminRole(id: number) {
+  return apiFetch<EntityRef>(`/rest/api/1/admin/roles/${id}`);
+}
+
+export async function createAdminRole(payload: NamedEntityPayload) {
+  return apiFetch<EntityRef>("/rest/api/1/admin/roles", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminRole(id: number, payload: NamedEntityPayload) {
+  return apiFetch<EntityRef>(`/rest/api/1/admin/roles/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminRole(id: number) {
+  return apiFetch<void>(`/rest/api/1/admin/roles/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getAdminGroups() {
+  return apiFetch<EntityRef[]>("/rest/api/1/admin/groups");
+}
+
+export async function getAdminGroup(id: number) {
+  return apiFetch<EntityRef>(`/rest/api/1/admin/groups/${id}`);
+}
+
+export async function createAdminGroup(payload: NamedEntityPayload) {
+  return apiFetch<EntityRef>("/rest/api/1/admin/groups", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminGroup(id: number, payload: NamedEntityPayload) {
+  return apiFetch<EntityRef>(`/rest/api/1/admin/groups/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminGroup(id: number) {
+  return apiFetch<void>(`/rest/api/1/admin/groups/${id}`, {
+    method: "DELETE",
   });
 }
 

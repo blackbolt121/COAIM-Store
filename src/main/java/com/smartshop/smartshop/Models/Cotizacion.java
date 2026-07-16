@@ -1,5 +1,7 @@
 package com.smartshop.smartshop.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.smartshop.smartshop.Enumeration.CotizacionEstado;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,6 +29,15 @@ public class Cotizacion {
 
     @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuoteItem> items;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private CotizacionEstado estado = CotizacionEstado.BORRADOR;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creado_por_id")
+    private Usuario creadoPor;
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

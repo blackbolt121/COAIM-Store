@@ -78,6 +78,31 @@ services:
       - "traefik.http.routers.siscad-admin-http.entrypoints=web"
       - "traefik.http.routers.siscad-admin-http.middlewares=redirect-to-https"
 
+  cotizanet:
+    build:
+      context: ./cotizanet
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://siscadindustrial.cloud
+    environment:
+      NEXT_PUBLIC_API_URL: https://siscadindustrial.cloud
+    networks:
+      - dokploy-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cotizanet.rule=Host(`cotizanet.siscadindustrial.cloud`)"
+      - "traefik.http.routers.cotizanet.entrypoints=websecure"
+      - "traefik.http.routers.cotizanet.service=cotizanet"
+      - "traefik.http.routers.cotizanet.tls=true"
+      - "traefik.http.services.cotizanet.loadbalancer.server.port=9000"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.cotizanet-http.rule=Host(`cotizanet.siscadindustrial.cloud`)"
+      - "traefik.http.routers.cotizanet-http.entrypoints=web"
+      - "traefik.http.routers.cotizanet-http.middlewares=redirect-to-https"
+
   mysql:
     image: mysql:8.4
     command:

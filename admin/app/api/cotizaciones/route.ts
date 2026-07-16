@@ -21,18 +21,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const form = new URLSearchParams();
-  form.set("nombre", nombre);
-  form.set("correo", correo);
-  form.set("productoSeleccionados", JSON.stringify(productoSeleccionados));
-
-  const backendResponse = await fetch(`${API_BASE_URL}/admin/quotes`, {
+  const backendResponse = await fetch(`${API_BASE_URL}/rest/api/1/cotizaciones`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-      Accept: "text/html,application/xhtml+xml",
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
-    body: form.toString(),
+    credentials: "include",
+    body: JSON.stringify({
+      nombre,
+      correo,
+      productoSeleccionados,
+    }),
   });
 
   if (!backendResponse.ok) {

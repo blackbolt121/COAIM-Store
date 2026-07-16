@@ -103,7 +103,7 @@ public class UrreaProductFetch {
         createOrUpdateRole("ROLE_OPERATOR");
         log.info("Verificación de roles iniciales completada.");
 
-        if (usuarioRepository.findByEmail("admin@mercadourrea.com.mx").isEmpty()) {
+        if (usuarioRepository.findByEmail("admin@siscadindustrial.cloud").isEmpty()) {
 
             // Busca el rol de Administrador
             Role adminRole = roleRepository.findByName("ROLE_ADMIN")
@@ -111,7 +111,7 @@ public class UrreaProductFetch {
             // Crea el nuevo usuario
             Usuario adminUser = new Usuario();
             adminUser.setName("Administrador");
-            adminUser.setEmail("admin@mercadourrea.com.mx");
+            adminUser.setEmail("admin@siscadindustrial.cloud");
             // **IMPORTANTE**: Codifica la contraseña antes de guardarla
             adminUser.setPassword(passwordEncoder.encode(adminPassword));
             adminUser.setRoles(Set.of(adminRole));

@@ -45,6 +45,19 @@ Important folders:
 - `admin/proxy.ts` for route protection
 - `admin/AGENTS.md` for Next-specific warnings
 
+### Cotizanet Next app
+
+Path: `cotizanet/`
+
+Important files:
+
+- `cotizanet/AGENTS.md` for app-specific rules and routes
+- `cotizanet/src/app/` for pages, API routes, and shared layout
+- `cotizanet/src/app/lib/api.ts` for backend calls
+- `cotizanet/src/app/components/admin-shell.tsx` for authenticated navigation
+
+If you need to change Cotizanet behavior, read `cotizanet/AGENTS.md` first and keep `NEXT_PUBLIC_API_URL` aligned with the production backend.
+
 If the feature already exists in Next, prefer extending it here instead of recreating it in Thymeleaf.
 
 ### Spring backend

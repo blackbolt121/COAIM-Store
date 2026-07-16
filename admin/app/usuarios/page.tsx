@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { AdminUser, getAdminUsers } from "@/lib/api";
 
+function formatRoleLabel(name: string) {
+  return name.replace(/^ROLE_/, "").toLowerCase();
+}
+
 export default function UsuariosPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,14 +77,15 @@ export default function UsuariosPage() {
                   <th className="px-6 py-4">Correo</th>
                   <th className="px-6 py-4">Teléfono</th>
                   <th className="px-6 py-4">Estado</th>
-                  <th className="px-6 py-4">Rol</th>
+                  <th className="px-6 py-4">Roles</th>
+                  <th className="px-6 py-4">Grupos</th>
                   <th className="px-6 py-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200">
                 {!loading && filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-zinc-500">
+                    <td colSpan={7} className="px-6 py-10 text-center text-zinc-500">
                       No hay usuarios para mostrar.
                     </td>
                   </tr>
@@ -96,7 +101,24 @@ export default function UsuariosPage() {
                         {user.activo ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-600">{user.roles?.length ? user.roles.join(", ") : "Sin rol"}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        {user.roles?.length ? user.roles.map((role) => (
+                          <span key={role.id} className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
+                            {formatRoleLabel(role.name)}
+                          </span>
+                        )) : <span className="text-zinc-500">Sin rol</span>}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-2">
+                        {user.groups?.length ? user.groups.map((group) => (
+                          <span key={group.id} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                            {group.name}
+                          </span>
+                        )) : <span className="text-zinc-500">Sin grupo</span>}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <Link href={`/usuarios/${user.id}`} className="rounded-xl bg-zinc-950 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-600">
                         Editar

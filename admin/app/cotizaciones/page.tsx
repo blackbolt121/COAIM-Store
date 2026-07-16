@@ -2,16 +2,51 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
-import { AdminUser, Product, ProductSearchResponse, getAdminUsers } from "@/lib/api";
+import {
+  CotizacionEstado,
+  CotizacionListItem,
+  CotizacionPage,
+  AdminUser,
+  Product,
+  ProductSearchResponse,
+  createCotizacion,
+  getCotizaciones,
+  getCurrentUser,
+  getAdminUsers,
+} from "@/lib/api";
 
 type SelectedQuoteItem = Product & { quantity: number };
 
 const SEARCH_PAGE_SIZE = 6;
+const LIST_PAGE_SIZE = 10;
+
+const statusLabels: Record<CotizacionEstado, string> = {
+  BORRADOR: "Borrador",
+  ENVIADA: "Enviada",
+};
+
+const statusClasses: Record<CotizacionEstado, string> = {
+  BORRADOR: "bg-zinc-100 text-zinc-700",
+  ENVIADA: "bg-emerald-100 text-emerald-800",
+};
 
 function money(amount: number) {
   return amount.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function buildSelectionPayload(items: SelectedQuoteItem[]) {
@@ -21,14 +56,30 @@ function buildSelectionPayload(items: SelectedQuoteItem[]) {
   }, {});
 }
 
+function emptyListState(): CotizacionPage {
+  return {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: LIST_PAGE_SIZE,
+    first: true,
+    last: true,
+    empty: true,
+  };
+}
+
 export default function CotizacionesPage() {
+  const [viewerRoles, setViewerRoles] = useState<string[]>([]);
+  const canSeeAllQuotes = viewerRoles.includes("ROLE_ADMIN");
+
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(0);
   const [results, setResults] = useState<Product[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [clients, setClients] = useState<AdminUser[]>([]);
   const [clientSearch, setClientSearch] = useState("");
@@ -38,12 +89,33 @@ export default function CotizacionesPage() {
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [selectedItems, setSelectedItems] = useState<SelectedQuoteItem[]>([]);
-  const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [savingQuote, setSavingQuote] = useState(false);
+  const [composerMessage, setComposerMessage] = useState<string | null>(null);
+  const [composerError, setComposerError] = useState<string | null>(null);
+
+  const [listQuery, setListQuery] = useState("");
+  const [debouncedListQuery, setDebouncedListQuery] = useState("");
+  const [listEstado, setListEstado] = useState<"" | CotizacionEstado>("");
+  const [listDestinatario, setListDestinatario] = useState("");
+  const [listCreador, setListCreador] = useState("");
+  const [listPage, setListPage] = useState(0);
+  const [listData, setListData] = useState<CotizacionPage>(emptyListState());
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
+  const [listRefreshToken, setListRefreshToken] = useState(0);
 
   useEffect(() => {
     let active = true;
+
+    getCurrentUser()
+      .then((profile) => {
+        if (!active) return;
+        setViewerRoles((profile.roles ?? []).map((role) => role.name));
+      })
+      .catch(() => {
+        if (!active) return;
+        setViewerRoles([]);
+      });
 
     getAdminUsers()
       .then((response) => {
@@ -70,6 +142,15 @@ export default function CotizacionesPage() {
   }, [query]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedListQuery(listQuery.trim());
+      setListPage(0);
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [listQuery]);
+
+  useEffect(() => {
     let active = true;
 
     if (!debouncedQuery) {
@@ -80,7 +161,7 @@ export default function CotizacionesPage() {
 
     const load = async () => {
       try {
-        setError(null);
+        setSearchError(null);
         setResults([]);
         setTotalPages(0);
         setTotalElements(0);
@@ -106,7 +187,7 @@ export default function CotizacionesPage() {
         setTotalElements(data.totalElements ?? 0);
       } catch (requestError) {
         if (!active) return;
-        setError(requestError instanceof Error ? requestError.message : "No se pudieron cargar los productos.");
+        setSearchError(requestError instanceof Error ? requestError.message : "No se pudieron cargar los productos.");
         setResults([]);
         setTotalPages(0);
         setTotalElements(0);
@@ -120,10 +201,50 @@ export default function CotizacionesPage() {
     };
   }, [debouncedQuery, page]);
 
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      try {
+        setListLoading(true);
+        setListError(null);
+
+        const response = await getCotizaciones({
+          q: debouncedListQuery || undefined,
+          estado: listEstado || undefined,
+          destinatario: listDestinatario.trim() || undefined,
+          creador: canSeeAllQuotes ? listCreador.trim() || undefined : undefined,
+          page: listPage,
+          size: LIST_PAGE_SIZE,
+        });
+
+        if (!active) return;
+        setListData(response);
+      } catch (requestError) {
+        if (!active) return;
+        setListError(requestError instanceof Error ? requestError.message : "No se pudieron cargar las cotizaciones.");
+        setListData(emptyListState());
+      } finally {
+        if (active) {
+          setListLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedListQuery, listEstado, listDestinatario, listCreador, listPage, canSeeAllQuotes, listRefreshToken]);
+
   const subtotal = useMemo(
     () => selectedItems.reduce((acc, item) => acc + Number(item.price ?? 0) * item.quantity, 0),
     [selectedItems],
   );
+
+  const iva = useMemo(() => subtotal * 0.16, [subtotal]);
+  const total = useMemo(() => subtotal + iva, [subtotal, iva]);
 
   const filteredClients = useMemo(() => {
     const term = clientSearch.trim().toLowerCase();
@@ -143,10 +264,7 @@ export default function CotizacionesPage() {
   const visibleResults = debouncedQuery ? results : [];
   const visibleTotalPages = debouncedQuery ? totalPages : 0;
   const visibleTotalElements = debouncedQuery ? totalElements : 0;
-  const visibleError = debouncedQuery ? error : null;
-
-  const iva = useMemo(() => subtotal * 0.16, [subtotal]);
-  const total = useMemo(() => subtotal + iva, [subtotal, iva]);
+  const visibleError = debouncedQuery ? searchError : null;
 
   const clearSearch = () => {
     setQuery("");
@@ -155,7 +273,17 @@ export default function CotizacionesPage() {
     setResults([]);
     setTotalPages(0);
     setTotalElements(0);
-    setError(null);
+    setSearchError(null);
+  };
+
+  const resetComposer = () => {
+    setNombre("");
+    setCorreo("");
+    setSelectedItems([]);
+    setSelectedClient(null);
+    setClientSearch("");
+    setManualClient(false);
+    setClientDropdownOpen(false);
   };
 
   const selectClient = (client: AdminUser) => {
@@ -169,7 +297,7 @@ export default function CotizacionesPage() {
 
   const toggleManualClient = (enabled: boolean) => {
     setManualClient(enabled);
-    setSendError(null);
+    setComposerError(null);
 
     if (enabled) {
       setSelectedClient(null);
@@ -221,49 +349,37 @@ export default function CotizacionesPage() {
     setSelectedItems((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setSuccess(null);
-    setSendError(null);
+  const submitQuote = async (estado: CotizacionEstado) => {
+    setComposerMessage(null);
+    setComposerError(null);
 
     if (!nombre.trim() || !correo.trim()) {
-      setSendError("Captura nombre y correo para enviar la cotización.");
+      setComposerError("Captura nombre y correo del cliente.");
       return;
     }
 
-    if (selectedItems.length === 0) {
-      setSendError("Agrega al menos un producto a la cotización.");
+    if (estado === "ENVIADA" && selectedItems.length === 0) {
+      setComposerError("Agrega al menos un producto para enviar la cotización.");
       return;
     }
 
-    setSending(true);
+    setSavingQuote(true);
 
     try {
-      const response = await fetch("/api/cotizaciones", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: nombre.trim(),
-          correo: correo.trim(),
-          productoSeleccionados: buildSelectionPayload(selectedItems),
-        }),
+      await createCotizacion({
+        nombre: nombre.trim(),
+        correo: correo.trim(),
+        productoSeleccionados: buildSelectionPayload(selectedItems),
+        estado,
       });
 
-      if (!response.ok) {
-        const message = await response.text().catch(() => "");
-        throw new Error(message || "No se pudo enviar la cotización.");
-      }
-
-      setSuccess("Cotización enviada correctamente.");
-      setNombre("");
-      setCorreo("");
-      setSelectedItems([]);
+      setComposerMessage(estado === "ENVIADA" ? "Cotización enviada correctamente." : "Borrador guardado correctamente.");
+      resetComposer();
+      setListRefreshToken((current) => current + 1);
     } catch (requestError) {
-      setSendError(requestError instanceof Error ? requestError.message : "No se pudo enviar la cotización.");
+      setComposerError(requestError instanceof Error ? requestError.message : "No se pudo guardar la cotización.");
     } finally {
-      setSending(false);
+      setSavingQuote(false);
     }
   };
 
@@ -271,296 +387,296 @@ export default function CotizacionesPage() {
 
   return (
     <AdminShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">Cotizaciones</p>
           <h2 className="mt-2 text-2xl font-semibold text-zinc-950">Cotizador de productos</h2>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600">
-            Busca productos, agrégalos a la tabla y envía la cotización al cliente.
+            Busca productos, agrégalos a la tabla y guarda un borrador o envía la cotización.
           </p>
         </section>
 
-        {success ? (
+        {composerMessage ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            {success}
+            {composerMessage}
           </div>
         ) : null}
-        {sendError ? (
+        {composerError ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {sendError}
+            {composerError}
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <section className="grid gap-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm lg:grid-cols-2">
-            {manualClient ? (
-              <>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-zinc-700">Nombre del cliente</span>
-                  <input
-                    value={nombre}
-                    onChange={(event) => setNombre(event.target.value)}
-                    placeholder="Nombre completo"
-                    className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                  />
-                </label>
+        <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="space-y-6">
+            <div className="grid gap-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm lg:grid-cols-2">
+              {manualClient ? (
+                <>
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-zinc-700">Nombre del cliente</span>
+                    <input
+                      value={nombre}
+                      onChange={(event) => setNombre(event.target.value)}
+                      placeholder="Nombre completo"
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                    />
+                  </label>
 
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-zinc-700">Correo electrónico</span>
-                  <input
-                    value={correo}
-                    onChange={(event) => setCorreo(event.target.value)}
-                    type="email"
-                    placeholder="cliente@ejemplo.com"
-                    className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                  />
-                </label>
-              </>
-            ) : (
-              <div
-                className="relative lg:col-span-2"
-                onBlurCapture={(event) => {
-                  const nextTarget = event.relatedTarget;
-                  if (!nextTarget || !event.currentTarget.contains(nextTarget as Node)) {
-                    setClientDropdownOpen(false);
-                  }
-                }}
-              >
-                <div className="space-y-2">
-                  <span className="text-sm font-medium text-zinc-700">Seleccionar cliente</span>
-                  <input
-                    value={clientSearch}
-                    onFocus={() => setClientDropdownOpen(true)}
-                    onChange={(event) => handleClientSearchChange(event.target.value)}
-                    placeholder="Buscar por nombre, correo o ID"
-                    className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                  />
-                </div>
-
-                {clientDropdownOpen ? (
-                  <div className="absolute z-20 mt-2 max-h-72 w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg">
-                    <div className="border-b border-zinc-200 px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                      Clientes encontrados
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      {filteredClients.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-zinc-500">No hay clientes que coincidan.</div>
-                      ) : (
-                        filteredClients.map((client) => (
-                          <button
-                            key={client.id}
-                            type="button"
-                            onClick={() => selectClient(client)}
-                            className="block w-full border-b border-zinc-100 px-4 py-3 text-left transition hover:bg-zinc-50 last:border-b-0"
-                          >
-                            <div className="font-medium text-zinc-950">{client.name}</div>
-                            <div className="text-xs text-zinc-500">{client.email}</div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-
-                {selectedClient ? (
-                  <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    Cliente seleccionado: <span className="font-semibold">{selectedClient.name}</span> ({selectedClient.email})
-                  </div>
-                ) : null}
-
-              </div>
-            )}
-
-            <label className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 lg:col-span-2">
-              <input
-                type="checkbox"
-                checked={manualClient}
-                onChange={(event) => toggleManualClient(event.target.checked)}
-                className="h-4 w-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
-              />
-              <span className="text-sm text-zinc-700">
-                No encuentras el usuario? Proporciona los datos manualmente
-              </span>
-            </label>
-          </section>
-
-          <section className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <label className="w-full space-y-2 lg:max-w-2xl">
-                <span className="text-sm font-medium text-zinc-700">Buscar producto</span>
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Buscar por nombre, SKU o descripción"
-                  className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                />
-              </label>
-
-              <div className="flex items-center gap-3 text-sm text-zinc-500">
-                <span>{`${visibleTotalElements} resultado(s)`}</span>
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="rounded-xl border border-zinc-300 px-4 py-3 font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950"
+                  <label className="space-y-2">
+                    <span className="text-sm font-medium text-zinc-700">Correo electrónico</span>
+                    <input
+                      value={correo}
+                      onChange={(event) => setCorreo(event.target.value)}
+                      type="email"
+                      placeholder="cliente@ejemplo.com"
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                    />
+                  </label>
+                </>
+              ) : (
+                <div
+                  className="relative lg:col-span-2"
+                  onBlurCapture={(event) => {
+                    const nextTarget = event.relatedTarget;
+                    if (!nextTarget || !event.currentTarget.contains(nextTarget as Node)) {
+                      setClientDropdownOpen(false);
+                    }
+                  }}
                 >
-                  Limpiar búsqueda
-                </button>
-              </div>
-            </div>
-
-            {showResults ? (
-              <div className="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                <div className="flex items-center justify-between gap-3 border-b border-zinc-200 pb-3">
-                  <p className="text-sm font-semibold text-zinc-900">Productos encontrados</p>
-                  <div className="flex items-center gap-2 text-sm">
-                    <button
-                      type="button"
-                      disabled={page <= 0}
-                      onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                      className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold text-zinc-700 transition disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Prev
-                    </button>
-                    <button
-                      type="button"
-                      disabled={page + 1 >= visibleTotalPages}
-                      onClick={() => setPage((current) => current + 1)}
-                      className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold text-zinc-700 transition disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Next
-                    </button>
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium text-zinc-700">Seleccionar cliente</span>
+                    <input
+                      value={clientSearch}
+                      onFocus={() => setClientDropdownOpen(true)}
+                      onChange={(event) => handleClientSearchChange(event.target.value)}
+                      placeholder="Buscar por nombre, correo o ID"
+                      className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                    />
                   </div>
-                </div>
 
-                {visibleError ? <p className="mt-3 text-sm text-red-700">{visibleError}</p> : null}
-
-                <div className="mt-3 space-y-2">
-                  {visibleResults.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500">
-                      No se encontraron productos con ese criterio.
-                    </div>
-                  ) : null}
-
-                  {visibleResults.map((product) => (
-                    <button
-                      key={product.id}
-                      type="button"
-                      onClick={() => handleSelectProduct(product)}
-                      className="flex w-full items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-3 text-left transition hover:border-zinc-950 hover:shadow-sm"
-                    >
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-contain p-1" />
+                  {clientDropdownOpen ? (
+                    <div className="absolute z-20 mt-2 max-h-72 w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg">
+                      <div className="border-b border-zinc-200 px-4 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                        Clientes encontrados
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {filteredClients.length === 0 ? (
+                          <div className="px-4 py-6 text-sm text-zinc-500">No hay clientes que coincidan.</div>
                         ) : (
-                          <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">Sin imagen</span>
+                          filteredClients.map((client) => (
+                            <button
+                              key={client.id}
+                              type="button"
+                              onClick={() => selectClient(client)}
+                              className="block w-full border-b border-zinc-100 px-4 py-3 text-left transition hover:bg-zinc-50 last:border-b-0"
+                            >
+                              <div className="font-medium text-zinc-950">{client.name}</div>
+                              <div className="text-xs text-zinc-500">{client.email}</div>
+                            </button>
+                          ))
                         )}
                       </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-zinc-950">{product.name}</p>
-                            <p className="text-xs text-zinc-500">SKU: {product.sku ?? "—"}</p>
-                          </div>
-                          <p className="text-sm font-semibold text-zinc-950">{money(Number(product.price ?? 0))}</p>
-                        </div>
-                        <p className="mt-1 truncate text-xs text-zinc-500">{product.description ?? "Sin descripción"}</p>
-                      </div>
-
-                      <span className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Agregar</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-4 flex items-center justify-between text-xs text-zinc-500">
-                  <span>
-                    Página {page + 1} de {Math.max(visibleTotalPages, 1)}
-                  </span>
-                  <span>Haz click en un producto para añadirlo a la cotización</span>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-5 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
-                Escribe para buscar productos y agregarlos a la cotización.
-              </div>
-            )}
-          </section>
-
-          <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-            <div className="border-b border-zinc-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-zinc-950">Productos cotizados</h3>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-zinc-200 text-sm">
-                <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                  <tr>
-                    <th className="px-6 py-4">Producto</th>
-                    <th className="px-6 py-4">Precio</th>
-                    <th className="px-6 py-4">Cantidad</th>
-                    <th className="px-6 py-4">Total</th>
-                    <th className="px-6 py-4"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200">
-                  {selectedItems.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-zinc-500">
-                        Aún no has agregado productos a la cotización.
-                      </td>
-                    </tr>
+                    </div>
                   ) : null}
 
-                  {selectedItems.map((item) => {
-                    const lineTotal = Number(item.price ?? 0) * item.quantity;
+                  {selectedClient ? (
+                    <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                      Cliente seleccionado: <span className="font-semibold">{selectedClient.name}</span> ({selectedClient.email})
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
-                    return (
-                      <tr key={item.id} className="hover:bg-zinc-50/80">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
-                              {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain p-1" />
-                              ) : (
-                                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">Sin imagen</span>
-                              )}
+              <label className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 lg:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={manualClient}
+                  onChange={(event) => toggleManualClient(event.target.checked)}
+                  className="h-4 w-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+                />
+                <span className="text-sm text-zinc-700">
+                  No encuentras el usuario? Proporciona los datos manualmente
+                </span>
+              </label>
+            </div>
+
+            <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <label className="w-full space-y-2 lg:max-w-2xl">
+                  <span className="text-sm font-medium text-zinc-700">Buscar producto</span>
+                  <input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Buscar por nombre, SKU o descripción"
+                    className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                  />
+                </label>
+
+                <div className="flex items-center gap-3 text-sm text-zinc-500">
+                  <span>{`${visibleTotalElements} resultado(s)`}</span>
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="rounded-xl border border-zinc-300 px-4 py-3 font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950"
+                  >
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              </div>
+
+              {showResults ? (
+                <div className="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="flex items-center justify-between gap-3 border-b border-zinc-200 pb-3">
+                    <p className="text-sm font-semibold text-zinc-900">Productos encontrados</p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <button
+                        type="button"
+                        disabled={page <= 0}
+                        onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                        className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold text-zinc-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Prev
+                      </button>
+                      <button
+                        type="button"
+                        disabled={page + 1 >= visibleTotalPages}
+                        onClick={() => setPage((current) => current + 1)}
+                        className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold text-zinc-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+
+                  {visibleError ? <p className="mt-3 text-sm text-red-700">{visibleError}</p> : null}
+
+                  <div className="mt-3 space-y-2">
+                    {visibleResults.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-4 py-6 text-center text-sm text-zinc-500">
+                        No se encontraron productos con ese criterio.
+                      </div>
+                    ) : null}
+
+                    {visibleResults.map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => handleSelectProduct(product)}
+                        className="flex w-full items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-3 text-left transition hover:border-zinc-950 hover:shadow-sm"
+                      >
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="h-full w-full object-contain p-1" />
+                          ) : (
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">Sin imagen</span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-zinc-950">{product.name}</p>
+                              <p className="text-xs text-zinc-500">SKU: {product.sku ?? "—"}</p>
                             </div>
-                            <div>
-                              <div className="font-medium text-zinc-950">{item.name}</div>
-                              <div className="text-xs text-zinc-500">SKU: {item.sku ?? "—"}</div>
-                            </div>
+                            <p className="text-sm font-semibold text-zinc-950">{money(Number(product.price ?? 0))}</p>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 text-zinc-600">{money(Number(item.price ?? 0))}</td>
-                        <td className="px-6 py-4">
-                          <input
-                            type="number"
-                            min={1}
-                            value={item.quantity}
-                            onChange={(event) => handleQuantityChange(item.id, Number(event.target.value))}
-                            className="w-24 rounded-xl border border-zinc-300 px-3 py-2 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
-                          />
-                        </td>
-                        <td className="px-6 py-4 font-medium text-zinc-950">{money(lineTotal)}</td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => handleRemove(item.id)}
-                            className="rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
-                          >
-                            Quitar
-                          </button>
+                          <p className="mt-1 truncate text-xs text-zinc-500">{product.description ?? "Sin descripción"}</p>
+                        </div>
+
+                        <span className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Agregar</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between text-xs text-zinc-500">
+                    <span>
+                      Página {page + 1} de {Math.max(visibleTotalPages, 1)}
+                    </span>
+                    <span>Haz click en un producto para añadirlo a la cotización</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
+                  Escribe para buscar productos y agregarlos a la cotización.
+                </div>
+              )}
+            </div>
+
+            <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
+              <div className="border-b border-zinc-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-zinc-950">Productos cotizados</h3>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-zinc-200 text-sm">
+                  <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    <tr>
+                      <th className="px-6 py-4">Producto</th>
+                      <th className="px-6 py-4">Precio</th>
+                      <th className="px-6 py-4">Cantidad</th>
+                      <th className="px-6 py-4">Total</th>
+                      <th className="px-6 py-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200">
+                    {selectedItems.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-10 text-center text-zinc-500">
+                          Aún no has agregado productos a la cotización.
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                    ) : null}
 
-          <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-            <div />
+                    {selectedItems.map((item) => {
+                      const lineTotal = Number(item.price ?? 0) * item.quantity;
+
+                      return (
+                        <tr key={item.id} className="hover:bg-zinc-50/80">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50">
+                                {item.imageUrl ? (
+                                  <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain p-1" />
+                                ) : (
+                                  <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-400">Sin imagen</span>
+                                )}
+                              </div>
+                              <div>
+                                <div className="font-medium text-zinc-950">{item.name}</div>
+                                <div className="text-xs text-zinc-500">SKU: {item.sku ?? "—"}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-zinc-600">{money(Number(item.price ?? 0))}</td>
+                          <td className="px-6 py-4">
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.quantity}
+                              onChange={(event) => handleQuantityChange(item.id, Number(event.target.value))}
+                              className="w-24 rounded-xl border border-zinc-300 px-3 py-2 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                            />
+                          </td>
+                          <td className="px-6 py-4 font-medium text-zinc-950">{money(lineTotal)}</td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleRemove(item.id)}
+                              className="rounded-xl border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                            >
+                              Quitar
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-6">
             <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-zinc-950">Resumen</h3>
               <div className="mt-4 space-y-3 text-sm text-zinc-600">
@@ -578,16 +694,190 @@ export default function CotizacionesPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={sending}
-                className="mt-6 w-full rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {sending ? "Enviando..." : "Enviar cotización"}
-              </button>
+              <div className="mt-6 grid gap-3">
+                <button
+                  type="button"
+                  disabled={savingQuote}
+                  onClick={() => submitQuote("BORRADOR")}
+                  className="w-full rounded-2xl border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-800 transition hover:border-zinc-950 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingQuote ? "Guardando..." : "Guardar borrador"}
+                </button>
+                <button
+                  type="button"
+                  disabled={savingQuote}
+                  onClick={() => submitQuote("ENVIADA")}
+                  className="w-full rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingQuote ? "Enviando..." : "Enviar cotización"}
+                </button>
+              </div>
             </div>
-          </section>
-        </form>
+
+            <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">Historial</p>
+                  <h3 className="mt-2 text-lg font-semibold text-zinc-950">
+                    {canSeeAllQuotes ? "Todas las cotizaciones" : "Mis cotizaciones"}
+                  </h3>
+                </div>
+                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
+                  {listData.totalElements}
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <input
+                  value={listQuery}
+                  onChange={(event) => setListQuery(event.target.value)}
+                  placeholder="Buscar por folio, cliente o vendedor"
+                  className="w-full rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input
+                    value={listDestinatario}
+                    onChange={(event) => {
+                      setListDestinatario(event.target.value);
+                      setListPage(0);
+                    }}
+                    placeholder="Filtrar por destinatario"
+                    className="rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                  />
+                  <select
+                    value={listEstado}
+                    onChange={(event) => {
+                      setListEstado((event.target.value || "") as "" | CotizacionEstado);
+                      setListPage(0);
+                    }}
+                    className="rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                  >
+                    <option value="">Todos los estados</option>
+                    <option value="BORRADOR">Borrador</option>
+                    <option value="ENVIADA">Enviada</option>
+                  </select>
+                  {canSeeAllQuotes ? (
+                    <input
+                      value={listCreador}
+                      onChange={(event) => {
+                        setListCreador(event.target.value);
+                        setListPage(0);
+                      }}
+                      placeholder="Filtrar por creador"
+                      className="sm:col-span-2 rounded-xl border border-zinc-300 px-4 py-3 text-sm outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10"
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setListQuery("");
+                      setDebouncedListQuery("");
+                      setListEstado("");
+                      setListDestinatario("");
+                      setListCreador("");
+                      setListPage(0);
+                    }}
+                    className="sm:col-span-2 rounded-xl border border-zinc-300 px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </div>
+
+              {listError ? (
+                <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {listError}
+                </div>
+              ) : null}
+
+              <div className="mt-4 overflow-hidden rounded-2xl border border-zinc-200">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-zinc-200 text-sm">
+                    <thead className="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                      <tr>
+                        <th className="px-4 py-3">Folio</th>
+                        <th className="px-4 py-3">Fecha</th>
+                        <th className="px-4 py-3">Para quién</th>
+                        <th className="px-4 py-3">Creado por</th>
+                        <th className="px-4 py-3">Estado</th>
+                        <th className="px-4 py-3 text-center">Items</th>
+                        <th className="px-4 py-3 text-right">Total</th>
+                        <th className="px-4 py-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200">
+                      {!listLoading && listData.content.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="px-4 py-8 text-center text-zinc-500">
+                            No hay cotizaciones para mostrar.
+                          </td>
+                        </tr>
+                      ) : null}
+
+                      {listData.content.map((quote: CotizacionListItem) => (
+                        <tr key={quote.id} className="hover:bg-zinc-50/80">
+                          <td className="px-4 py-3 font-medium text-zinc-950">{quote.id}</td>
+                          <td className="px-4 py-3 text-zinc-600">{formatDate(quote.createdAt)}</td>
+                          <td className="px-4 py-3 text-zinc-600">
+                            <div className="font-medium text-zinc-950">{quote.nombre}</div>
+                            <div className="text-xs text-zinc-500">{quote.correo}</div>
+                          </td>
+                          <td className="px-4 py-3 text-zinc-600">
+                            <div className="font-medium text-zinc-950">{quote.creadoPor?.name ?? "—"}</div>
+                            <div className="text-xs text-zinc-500">{quote.creadoPor?.email ?? "—"}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[quote.estado] ?? "bg-zinc-100 text-zinc-700"}`}>
+                              {statusLabels[quote.estado] ?? quote.estado}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center text-zinc-600">{quote.itemsCount}</td>
+                          <td className="px-4 py-3 text-right font-medium text-zinc-950">{money(Number(quote.total ?? 0))}</td>
+                          <td className="px-4 py-3 text-right">
+                            <a
+                              href={`/cotizaciones/${quote.id}`}
+                              className="rounded-xl bg-zinc-950 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-600"
+                            >
+                              {quote.estado === "BORRADOR" ? "Editar borrador" : "Ver"}
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-zinc-500">
+                  {listLoading ? "Cargando..." : `${listData.totalElements} cotización(es)`}
+                </p>
+                <div className="flex items-center gap-2 text-sm">
+                  <button
+                    type="button"
+                    disabled={listLoading || listPage <= 0}
+                    onClick={() => setListPage((current) => Math.max(current - 1, 0))}
+                    className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold text-zinc-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <span className="px-2 text-zinc-500">
+                    {listData.totalPages > 0 ? `${listData.number + 1} / ${listData.totalPages}` : "1 / 1"}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={listLoading || listPage + 1 >= listData.totalPages}
+                    onClick={() => setListPage((current) => current + 1)}
+                    className="rounded-xl border border-zinc-300 px-3 py-2 font-semibold text-zinc-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
       </div>
     </AdminShell>
   );

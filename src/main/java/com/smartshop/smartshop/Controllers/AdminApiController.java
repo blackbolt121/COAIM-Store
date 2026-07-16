@@ -2,6 +2,8 @@ package com.smartshop.smartshop.Controllers;
 
 import com.smartshop.smartshop.DTO.AdminOrderDTO;
 import com.smartshop.smartshop.DTO.AdminDashboardDTO;
+import com.smartshop.smartshop.DTO.EntityNameRequest;
+import com.smartshop.smartshop.DTO.EntityRefDTO;
 import com.smartshop.smartshop.DTO.AdminOrderUpdateRequest;
 import com.smartshop.smartshop.DTO.AdminUserUpdateRequest;
 import com.smartshop.smartshop.DTO.CategoryProductCountDto;
@@ -9,11 +11,13 @@ import com.smartshop.smartshop.DTO.MonthlySalesDto;
 import com.smartshop.smartshop.DTO.UsuarioDTO;
 import com.smartshop.smartshop.Models.Pedidos;
 import com.smartshop.smartshop.Models.Role;
+import com.smartshop.smartshop.Models.UserGroup;
 import com.smartshop.smartshop.Models.Usuario;
 import com.smartshop.smartshop.Repositories.PedidoRepository;
 import com.smartshop.smartshop.Repositories.ProductRepository;
 import com.smartshop.smartshop.Repositories.UserRepository;
 import com.smartshop.smartshop.Repositories.RoleRepository;
+import com.smartshop.smartshop.Repositories.UserGroupRepository;
 import com.smartshop.smartshop.Services.UserService;
 import com.smartshop.smartshop.Services.DashboardService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +39,7 @@ public class AdminApiController {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UserGroupRepository userGroupRepository;
     private final DashboardService dashboardService;
 
     @GetMapping("/users")
@@ -69,18 +74,174 @@ public class AdminApiController {
         if (request.pais() != null) user.setPais(request.pais());
         if (request.codigoPostal() != null) user.setCodigoPostal(request.codigoPostal());
         if (request.activo() != null) user.setActivo(request.activo());
-        if (request.roles() != null) {
-            Set<Role> roles = request.roles().stream()
-                    .map(roleRepository::findByName)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+        if (request.roleIds() != null) {
+            Set<Role> roles = request.roleIds().stream()
+                    .map(roleRepository::findById)
+                    .flatMap(Optional::stream)
                     .collect(Collectors.toSet());
-            if (!roles.isEmpty()) {
-                user.setRoles(roles);
-            }
+            user.setRoles(roles);
+        }
+        if (request.groupIds() != null) {
+            Set<UserGroup> groups = request.groupIds().stream()
+                    .map(userGroupRepository::findById)
+                    .flatMap(Optional::stream)
+                    .collect(Collectors.toSet());
+            user.setGroups(groups);
         }
 
         return ResponseEntity.ok(UsuarioDTO.fromEntity(userService.save(user)));
+    }
+
+    @GetMapping("/myself")
+    public ResponseEntity<UsuarioDTO> myself() {
+        Usuario usuario = userService.getUserByContext();
+        if (usuario == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(UsuarioDTO.fromEntity(usuario));
+    }
+
+    @GetMapping("/roles")
+    public List<EntityRefDTO> getRoles() {
+        return roleRepository.findAll().stream()
+                .map(AdminApiController::toRoleRef)
+                .toList();
+    }
+
+    @GetMapping("/roles/{id}")
+    public ResponseEntity<EntityRefDTO> getRoleById(@PathVariable Long id) {
+        return roleRepository.findById(id)
+                .map(AdminApiController::toRoleRef)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/roles")
+    public ResponseEntity<EntityRefDTO> createRole(@RequestBody EntityNameRequest request) {
+        String name = normalizeName(request.name());
+        if (name == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (roleRepository.findByName(name).isPresent()) {
+            return ResponseEntity.status(409).build();
+        }
+
+        Role role = new Role();
+        role.setName(name);
+        return ResponseEntity.ok(toRoleRef(roleRepository.save(role)));
+    }
+
+    @PutMapping("/roles/{id}")
+    public ResponseEntity<EntityRefDTO> updateRole(@PathVariable Long id, @RequestBody EntityNameRequest request) {
+        Optional<Role> roleOpt = roleRepository.findById(id);
+        if (roleOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String name = normalizeName(request.name());
+        if (name == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<Role> duplicateRole = roleRepository.findByName(name);
+        if (duplicateRole.isPresent() && !duplicateRole.get().getId().equals(id)) {
+            return ResponseEntity.status(409).build();
+        }
+
+        Role role = roleOpt.get();
+        role.setName(name);
+        return ResponseEntity.ok(toRoleRef(roleRepository.save(role)));
+    }
+
+    @DeleteMapping("/roles/{id}")
+    public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
+        Optional<Role> roleOpt = roleRepository.findById(id);
+        if (roleOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Role role = roleOpt.get();
+        if ("ROLE_ADMIN".equals(role.getName())) {
+            return ResponseEntity.status(409).build();
+        }
+
+        userService.getAllUsers().forEach(usuario -> {
+            if (usuario.getRoles() != null && usuario.getRoles().removeIf(current -> current.getId().equals(role.getId()))) {
+                userRepository.save(usuario);
+            }
+        });
+
+        roleRepository.delete(role);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/groups")
+    public List<EntityRefDTO> getGroups() {
+        return userGroupRepository.findAll().stream()
+                .map(AdminApiController::toGroupRef)
+                .toList();
+    }
+
+    @GetMapping("/groups/{id}")
+    public ResponseEntity<EntityRefDTO> getGroupById(@PathVariable Long id) {
+        return userGroupRepository.findById(id)
+                .map(AdminApiController::toGroupRef)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/groups")
+    public ResponseEntity<EntityRefDTO> createGroup(@RequestBody EntityNameRequest request) {
+        String name = normalizeName(request.name());
+        if (name == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (userGroupRepository.findByName(name).isPresent()) {
+            return ResponseEntity.status(409).build();
+        }
+
+        UserGroup group = new UserGroup();
+        group.setName(name);
+        return ResponseEntity.ok(toGroupRef(userGroupRepository.save(group)));
+    }
+
+    @PutMapping("/groups/{id}")
+    public ResponseEntity<EntityRefDTO> updateGroup(@PathVariable Long id, @RequestBody EntityNameRequest request) {
+        Optional<UserGroup> groupOpt = userGroupRepository.findById(id);
+        if (groupOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String name = normalizeName(request.name());
+        if (name == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<UserGroup> duplicateGroup = userGroupRepository.findByName(name);
+        if (duplicateGroup.isPresent() && !duplicateGroup.get().getId().equals(id)) {
+            return ResponseEntity.status(409).build();
+        }
+
+        UserGroup group = groupOpt.get();
+        group.setName(name);
+        return ResponseEntity.ok(toGroupRef(userGroupRepository.save(group)));
+    }
+
+    @DeleteMapping("/groups/{id}")
+    public ResponseEntity<Void> deleteGroup(@PathVariable Long id) {
+        Optional<UserGroup> groupOpt = userGroupRepository.findById(id);
+        if (groupOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        UserGroup group = groupOpt.get();
+        userService.getAllUsers().forEach(usuario -> {
+            if (usuario.getGroups() != null && usuario.getGroups().removeIf(current -> current.getId().equals(group.getId()))) {
+                userRepository.save(usuario);
+            }
+        });
+
+        userGroupRepository.delete(group);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/orders")
@@ -137,5 +298,22 @@ public class AdminApiController {
         }
 
         return ResponseEntity.ok(AdminOrderDTO.fromEntity(pedidoRepository.save(order), true));
+    }
+
+    private static EntityRefDTO toRoleRef(Role role) {
+        return new EntityRefDTO(role.getId(), role.getName());
+    }
+
+    private static EntityRefDTO toGroupRef(UserGroup group) {
+        return new EntityRefDTO(group.getId(), group.getName());
+    }
+
+    private static String normalizeName(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }

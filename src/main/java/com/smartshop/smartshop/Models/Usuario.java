@@ -15,8 +15,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@ToString(exclude = {"tokenList", "roles", "pedidos"}) // Excluye TODAS las relaciones en colección
-@EqualsAndHashCode(exclude = {"tokenList", "roles", "pedidos"})
+@ToString(exclude = {"tokenList", "roles", "groups", "pedidos"}) // Excluye TODAS las relaciones en colección
+@EqualsAndHashCode(exclude = {"tokenList", "roles", "groups", "pedidos"})
 public class Usuario {
 
     @Id
@@ -56,7 +56,17 @@ public class Usuario {
 
 
     @ManyToMany(fetch = FetchType.EAGER)
-    private Set<Role> roles;
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "usuario_groups",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "groups_id")
+    )
+    @Builder.Default
+    private Set<UserGroup> groups = new HashSet<>();
 
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // <--- Añade cascade
